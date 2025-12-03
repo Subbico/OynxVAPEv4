@@ -20,7 +20,7 @@ local mainapi = {
 	Scale = {Value = 1},
 	ThreadFix = setthreadidentity and true or false,
 	ToggleNotifications = {},
-	Version = '0.1',
+	Version = '0.6',
 	Discord = "@7jqw",
 	role = "",
 	user = "",
@@ -386,7 +386,7 @@ local function downloadFile(path, func)
 	if not isfile(path) then
 		createDownloader(path)
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/qyroke/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/'..select(1, path:gsub('ReVape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/'..select(1, path:gsub('ReVape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -6038,7 +6038,7 @@ general:CreateButton({
 			getgenv().username =getgenv().username or "GUEST"
 			getgenv().password =getgenv().password or "PASSWORD"
 
-			loadstring(game:HttpGet('https://raw.githubusercontent.com/qyroke/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/loader.lua', true))()
+			loadstring(game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/loader.lua', true))()
 										
 
 		end
@@ -6069,7 +6069,7 @@ general:CreateButton({
 			getgenv().username =getgenv().username or "GUEST"
 			getgenv().password =getgenv().password or "PASSWORD"
 										
-			loadstring(game:HttpGet('https://raw.githubusercontent.com/qyroke/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/loader.lua', true))()
+			loadstring(game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/loader.lua', true))()
 		end
 	end,
 	Tooltip = 'Reloads vape for debugging purposes'
@@ -6199,7 +6199,7 @@ guipane:CreateDropdown({
 			getgenv().username =getgenv().username or "GUEST"
 			getgenv().password =getgenv().password or "PASSWORD"
 			
-																													loadstring(game:HttpGet('https://raw.githubusercontent.com/qyroke/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/loader.lua', true))()
+																													loadstring(game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/loader.lua', true))()
 
 			end
 		end
