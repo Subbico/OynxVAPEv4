@@ -11421,8 +11421,8 @@ run(function()
 		return returned
 	end
 
+
 	local function getClutchBlock(limit)
-		print(store.hand.toolType)
 		if store.hand.toolType == 'block' then
 			return store.hand.tool.Name, store.hand.amount
 		elseif not limit then
@@ -11432,7 +11432,7 @@ run(function()
 			end
 			for _, item in store.inventory.inventory.items do
 				if bedwars.ItemMeta[item.itemType].block then
-					print(bedwars.ItemMeta[item.itemType].block)
+					print(httpService:JSONEncode(bedwars.ItemMeta[item.itemType]))
 					return item.itemType, item.amount
 				end
 			end
