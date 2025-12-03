@@ -6029,6 +6029,7 @@ general:CreateButton({
 		
 			getgenv().username =getgenv().username or "GUEST"
 			getgenv().password =getgenv().password or "PASSWORD"
+			getgenv().TestMode = getgenv().TestMode or false
 
 			loadstring(readfile('ReVape/loader.lua'), 'loader')()
 		
@@ -6037,7 +6038,7 @@ general:CreateButton({
 
 			getgenv().username =getgenv().username or "GUEST"
 			getgenv().password =getgenv().password or "PASSWORD"
-
+			getgenv().TestMode = getgenv().TestMode or false
 			loadstring(game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/loader.lua', true))()
 										
 
