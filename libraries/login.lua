@@ -36,7 +36,7 @@ end
 
 
 function login:Login()
-    local role, U, P = "guest", "GUEST", "PASSWORD"
+    local role, U, P = "", "", ""
 
     local ok = pcall(function()
         local req = postLogin(username, password)
@@ -65,7 +65,7 @@ end
 
 
 function login:SlientLogin()
-    local role, U, P = "guest", "GUEST", "PASSWORD"
+    local role, U, P = "", "", ""
 
     pcall(function()
         local req = postLogin(username, password)
