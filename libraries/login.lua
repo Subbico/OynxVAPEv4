@@ -5,8 +5,6 @@ local vape = shared.vape
 local http = game:GetService("HttpService")
 
 local apiBase = "https://onyxclient.fsl58.workers.dev/"
-local apiLogin = apiBase
-local apiHWID = apiBase .. "hwid?user="
 
 local username = ""
 local password = ""
@@ -17,27 +15,6 @@ if getgenv().TestAccount then
 else
     username = getgenv().username or "GUEST"
     password = getgenv().password or "PASSWORD"
-end
-
-
-local function fetchServerHWID(user)
-    if not user or user:lower() == "guest" then
-        return "GuestHWID"
-    end
-    local ok, res = pcall(function()
-        return game:HttpGet(apiHWID .. user)
-    end)
-
-    if not ok then return nil end
-
-    local decoded
-    pcall(function() decoded = http:JSONDecode(res) end)
-
-    if decoded and decoded.hwid then
-        return decoded.hwid
-    end
-
-    return nil
 end
 
 
@@ -75,16 +52,6 @@ function login:Login()
             vape:CreateNotification("Onyx", "Bad login response. Guest mode.", 7,'warning')
             return
         end
-
-        local serverHWID = fetchServerHWID(username)
-
-        if not serverHWID then
-            vape:CreateNotification("Onyx", "Account missing HWID. Using Guest.", 7,'warning')
-            return
-        end
-        if serverHWID == "GuestHWID" then
-            return
-        end
         role = decoded.role or "guest"
         U = username
         P = password
@@ -114,15 +81,6 @@ function login:SlientLogin()
             return
         end
 
-        local serverHWID = fetchServerHWID(username)
-
-        if not serverHWID then
-            vape:CreateNotification("Onyx", "Account missing HWID. Using Guest.", 7,'warning')
-            return
-        end
-        if serverHWID == "GuestHWID" then
-            return
-        end
         role = decoded.role or "guest"
         U = username
         P = password
