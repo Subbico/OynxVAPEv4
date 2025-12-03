@@ -14,7 +14,7 @@ end
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/soryed/ReVapeForRoblox/'..readfile('ReVape/profiles/commit.txt')..'/'..select(1, path:gsub('ReVape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/'..select(1, path:gsub('ReVape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -223,8 +223,11 @@ local hash = loadstring(downloadFile('ReVape/libraries/hash.lua'), 'hash')()
 local prediction = loadstring(downloadFile('ReVape/libraries/prediction.lua'), 'prediction')()
 entitylib = loadstring(downloadFile('ReVape/libraries/entity.lua'), 'entitylibrary')()
 local loginlib = loadstring(downloadFile("ReVape/libraries/login.lua"), "login")()
+local annclib = loadstring(downloadFile('ReVape/libraries/announcement.lua'), 'announcement')()
 local createlib = loadstring(downloadFile('ReVape/libraries/create.lua'), 'create')()
-prediction = loadstring(downloadFile('ReVape/libraries/prediction.lua'), 'prediction')()
+local baselib = loadstring(downloadFile('ReVape/libraries/base64.lua'), 'base64')()
+local spotifylib = loadstring(downloadFile('ReVape/libraries/spotify.lua'), 'spotify')()
+
 
 local whitelist = {
     alreadychecked = {},
@@ -8150,7 +8153,7 @@ run(function()
                     if shared.VapeDeveloper then
                         loadstring(readfile('ReVape/loader.lua'), 'loader')()
                     else
-                        loadstring(game:HttpGet('https://raw.githubusercontent.com/soryed/ReVapeForRoblox/main/loader.lua', true))()
+                        loadstring(game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/main/loader.lua', true))()
                     end
 
                     running = false
