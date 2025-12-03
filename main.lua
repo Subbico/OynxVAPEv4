@@ -168,6 +168,7 @@ if not shared.VapeIndependent then
 	loadstring(downloadFile('ReVape/libraries/spotify.lua'), 'spotify')()
 --	loadstring(downloadFile('ReVape/libraries/pathfind.lua'), 'pathfind')()
 	loadstring(downloadFile('ReVape/games/universal.lua'), 'universal')()
+	loadstring(downloadFile('ReVape/games/prediction.lua'), 'prediction')()
 	if isfile('ReVape/games/'..game.PlaceId..'.lua') then
 		loadstring(readfile('ReVape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))(...)
 	else
