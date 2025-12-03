@@ -1,0 +1,5 @@
+  loadstring(game:HttpGet("https://raw.githubusercontent.com/qyroke/OynxVAPEv4/main/NewMainScript.lua", true))({
+    username = "", -- enter username
+    password = "" -- enter password
+})
+ -- u can use a guest account by removing username and password
