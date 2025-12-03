@@ -181,7 +181,7 @@ local function getItem(itemName, inv)
 end
 
 local function getRoactRender(func)
-	return safeGetUpValue(safeGetUpValue(safeGetUpValue(func, 3).render, 2).render, 1)
+	return debug.getupvalue(debug.getupvalue(debug.getupvalue(func, 3).render, 2).render, 1)
 end
 
 local function getSword()
@@ -923,59 +923,21 @@ local function safeGetProto(func, index)
         return nil
     end
 end
-local function safeGetUpValue(func, index)
-    if not func then return nil end
-    local success, GUV = pcall(safeGetUpValue, func, index)
-    if success then
-        return GUV
-    else
-        warn("function:", func, "index:", index,", WM - getupvalue") 
-        return nil
-    end
-end
-local function safeGetConstants(func, index)
-    if not func then return nil end
-    local success, GC = pcall(safeGetConstants, func, index)
-    if success then
-        return GC
-    else
-        warn("function:", func, "index:", index,", WM - getconstants") 
-        return nil
-    end
-end
-local function safeSetConstants(func, index)
-    if not func then return nil end
-    local success, SC = pcall(safeSetConstants, func, index)
-    if success then
-        return SC
-    else
-        warn("function:", func, "index:", index,", WM - setconstants") 
-        return nil
-    end
-end
-local function safeGetConstants(func, index)
-    if not func then return nil end
-    local success, GC = pcall(safeGetConstants, func, index)
-    if success then
-        return GC
-    else
-        warn("function:", func, "index:", index,", WM - getconstants") 
-        return nil
-    end
-end
+
+
 
 run(function()
 	local KnitInit, Knit
 	repeat
 		KnitInit, Knit = pcall(function()
-			return safeGetUpValue(require(lplr.PlayerScripts.TS.knit).setup, 9)
+			return debug.getupvalue(require(lplr.PlayerScripts.TS.knit).setup, 9)
 		end)
 		if KnitInit then break end
 		task.wait(0.1)
 	until KnitInit
 
-	if not safeGetUpValue(Knit.Start, 1) then
-		repeat task.wait(0.1) until safeGetUpValue(Knit.Start, 1)
+	if not debug.getupvalue(Knit.Start, 1) then
+		repeat task.wait(0.1) until debug.getupvalue(Knit.Start, 1)
 	end
 
 	local Flamework = require(replicatedStorage['rbxts_include']['node_modules']['@flamework'].core.out).Flamework
@@ -994,7 +956,7 @@ run(function()
 		BlockController = require(replicatedStorage['rbxts_include']['node_modules']['@easy-games']['block-engine'].out).BlockEngine,
 		BlockEngine = require(lplr.PlayerScripts.TS.lib['block-engine']['client-block-engine']).ClientBlockEngine,
 		BlockPlacer = require(replicatedStorage['rbxts_include']['node_modules']['@easy-games']['block-engine'].out.client.placement['block-placer']).BlockPlacer,
-		BowConstantsTable = safeGetUpValue(Knit.Controllers.ProjectileController.enableBeam, 8),
+		BowConstantsTable = debug.getupvalue(Knit.Controllers.ProjectileController.enableBeam, 8),
 		ClickHold = require(replicatedStorage['rbxts_include']['node_modules']['@easy-games']['game-core'].out.client.ui.lib.util['click-hold']).ClickHold,
 		Client = Client,
 		ClientConstructor = require(replicatedStorage['rbxts_include']['node_modules']['@rbxts'].net.out.client),
@@ -1020,7 +982,7 @@ run(function()
 			}
 		end,
 		HudAliveCount = require(lplr.PlayerScripts.TS.controllers.global['top-bar'].ui.game['hud-alive-player-counts']).HudAlivePlayerCounts,
-		ItemMeta = safeGetUpValue(require(replicatedStorage.TS.item['item-meta']).getItemMeta, 1),
+		ItemMeta = debug.getupvalue(require(replicatedStorage.TS.item['item-meta']).getItemMeta, 1),
 		KillEffectMeta = require(replicatedStorage.TS.locker['kill-effect']['kill-effect-meta']).KillEffectMeta,
 		KillFeedController = Flamework.resolveDependency('client/controllers/game/kill-feed/kill-feed-controller@KillFeedController'),
 		Knit = Knit,
@@ -1037,7 +999,7 @@ run(function()
 		SoundList = require(replicatedStorage.TS.sound['game-sound']).GameSound,
 		SoundManager = require(replicatedStorage['rbxts_include']['node_modules']['@easy-games']['game-core'].out.shared.sound['sound-manager']),
 		Store = require(lplr.PlayerScripts.TS.ui.store).ClientStore,
-		TeamUpgradeMeta = safeGetUpValue(require(replicatedStorage.TS.games.bedwars['team-upgrade']['team-upgrade-meta']).getTeamUpgradeMetaForQueue, 6),
+		TeamUpgradeMeta = debug.getupvalue(require(replicatedStorage.TS.games.bedwars['team-upgrade']['team-upgrade-meta']).getTeamUpgradeMetaForQueue, 6),
 		UILayers = require(replicatedStorage['rbxts_include']['node_modules']['@easy-games']['game-core'].out).UILayers,
 		VisualizerUtils = require(lplr.PlayerScripts.TS.lib.visualizer['visualizer-utils']).VisualizerUtils,
 		WeldTable = require(replicatedStorage.TS.util['weld-util']).WeldUtil,
@@ -1066,7 +1028,7 @@ run(function()
 		DragonFly = Knit.Controllers.VoidDragonController.flapWings,
 		DropItem = Knit.Controllers.ItemDropController.dropItemInHand,
 		SetInvItem = safeGetProto(require(replicatedStorage.TS.entity.entities['inventory-entity']).InventoryEntity.SetInvItem, 3),
-		FireProjectile = safeGetUpValue(Knit.Controllers.ProjectileController.launchProjectileWithValues, 2),
+		FireProjectile = debug.getupvalue(Knit.Controllers.ProjectileController.launchProjectileWithValues, 2),
 		GroundHit = Knit.Controllers.FallDamageController.KnitStart,
 		GuitarHeal = Knit.Controllers.GuitarController.performHeal,
 		HannahKill = safeGetProto(Knit.Controllers.HannahController.registerExecuteInteractions, 1),
@@ -1094,7 +1056,7 @@ run(function()
 	end
 
 	for i, v in remoteNames do
-		local remote = dumpRemote(safeGetConstants(v))
+		local remote = dumpRemote(debug.getconstants(v))
 		if remote == '' then
 			notif('Onyx', 'Failed to grab remote ('..i..')', 10, 'alert')
 		end
@@ -1472,7 +1434,7 @@ run(function()
 			setthreadidentity(2)
 
 			bedwars.Shop = require(replicatedStorage.TS.games.bedwars.shop['bedwars-shop']).BedwarsShop
-			bedwars.ShopItems = safeGetUpValue(safeGetUpValue(bedwars.Shop.getShopItem, 1), 2)
+			bedwars.ShopItems = debug.getupvalue(debug.getupvalue(bedwars.Shop.getShopItem, 1), 2)
 			bedwars.Shop.getShopItem('iron_sword', lplr)
 
 			setthreadidentity(old)
@@ -1484,7 +1446,7 @@ run(function()
 				until vape.Loaded == nil or bedwars.AppController:isAppOpen('BedwarsItemShopApp')
 
 				bedwars.Shop = require(replicatedStorage.TS.games.bedwars.shop['bedwars-shop']).BedwarsShop
-				bedwars.ShopItems = safeGetUpValue(safeGetUpValue(bedwars.Shop.getShopItem, 1), 2)
+				bedwars.ShopItems = debug.getupvalue(debug.getupvalue(bedwars.Shop.getShopItem, 1), 2)
 				store.shopLoaded = true
 			end)
 		end
@@ -4402,7 +4364,7 @@ afk = vape.Categories.Minigames:CreateModule({
 				end
 	
 				for _, v in getconnections(runService.Heartbeat) do
-					if type(v.Function) == 'function' and table.find(safeGetConstants(v.Function), remotes.AfkStatus) then
+					if type(v.Function) == 'function' and table.find(debug.getconstants(v.Function), remotes.AfkStatus) then
 						v:Disconnect()
 					end
 				end
@@ -6200,7 +6162,7 @@ run(function()
 				end
 	
 				bedwars.ClickHold.showProgress = function(self)
-					local roact = safeGetUpValue(oldshowprogress, 1)
+					local roact = debug.getupvalue(oldshowprogress, 1)
 					local countdown = roact.mount(roact.createElement('ScreenGui', {}, { roact.createElement('Frame', {
 						[roact.Ref] = self.wrapperRef,
 						Size = UDim2.new(),
@@ -7112,10 +7074,10 @@ run(function()
 		DefaultOpacity = 0.8,
 		Function = function(hue, sat, val, opacity)
 			local func = oldinvrender or HotbarOpenInventory.render
-			modifyconstant(safeGetUpValue(HotbarApp, 23).render, 51, tonumber(Color3.fromHSV(hue, sat, val):ToHex(), 16))
-			modifyconstant(safeGetUpValue(HotbarApp, 23).render, 58, tonumber(Color3.fromHSV(hue, sat, math.clamp(val > 0.5 and val - 0.2 or val + 0.2, 0, 1)):ToHex(), 16))
-			modifyconstant(safeGetUpValue(HotbarApp, 23).render, 54, 1 - opacity)
-			modifyconstant(safeGetUpValue(HotbarApp, 23).render, 55, math.clamp(1.2 - opacity, 0, 1))
+			modifyconstant(debug.getupvalue(HotbarApp, 23).render, 51, tonumber(Color3.fromHSV(hue, sat, val):ToHex(), 16))
+			modifyconstant(debug.getupvalue(HotbarApp, 23).render, 58, tonumber(Color3.fromHSV(hue, sat, math.clamp(val > 0.5 and val - 0.2 or val + 0.2, 0, 1)):ToHex(), 16))
+			modifyconstant(debug.getupvalue(HotbarApp, 23).render, 54, 1 - opacity)
+			modifyconstant(debug.getupvalue(HotbarApp, 23).render, 55, math.clamp(1.2 - opacity, 0, 1))
 			modifyconstant(func, 31, tonumber(Color3.fromHSV(hue, sat, val):ToHex(), 16))
 			modifyconstant(func, 32, math.clamp(1.2 - opacity, 0, 1))
 			modifyconstant(func, 34, tonumber(Color3.fromHSV(hue, sat, math.clamp(val > 0.5 and val - 0.2 or val + 0.2, 0, 1)):ToHex(), 16))
@@ -7582,8 +7544,8 @@ run(function()
 		Name = 'Resize Health',
 		Function = function(callback)
 			modifyconstant(HotbarApp, 60, callback and 1 or nil)
-			modifyconstant(safeGetUpValue(HotbarApp, 15).render, 30, callback and 1 or nil)
-			modifyconstant(safeGetUpValue(HotbarApp, 23).tweenPosition, 16, callback and 0 or nil)
+			modifyconstant(debug.getupvalue(HotbarApp, 15).render, 30, callback and 1 or nil)
+			modifyconstant(debug.getupvalue(HotbarApp, 23).tweenPosition, 16, callback and 0 or nil)
 		end,
 		Default = true
 	})
@@ -7591,7 +7553,7 @@ run(function()
 		Name = 'No Hotbar Numbers',
 		Function = function(callback)
 			local func = oldinvrender or HotbarOpenInventory.render
-			modifyconstant(safeGetUpValue(HotbarApp, 23).render, 90, callback and 0 or nil)
+			modifyconstant(debug.getupvalue(HotbarApp, 23).render, 90, callback and 0 or nil)
 			modifyconstant(func, 71, callback and 0 or nil)
 		end,
 		Default = true
@@ -13433,14 +13395,14 @@ end)
 		local KnitInit, Knit
 		repeat
 			KnitInit, Knit = pcall(function()
-				return safeGetUpValue(require(game:GetService("Players").LocalPlayer.PlayerScripts.TS.knit).setup, 9)
+				return debug.getupvalue(require(game:GetService("Players").LocalPlayer.PlayerScripts.TS.knit).setup, 9)
 			end)
 			if KnitInit then break end
 			task.wait()
 		until KnitInit
 	
-		if not safeGetUpValue(Knit.Start, 1) then
-			repeat task.wait() until safeGetUpValue(Knit.Start, 1)
+		if not debug.getupvalue(Knit.Start, 1) then
+			repeat task.wait() until debug.getupvalue(Knit.Start, 1)
 		end
 	
 		local Players = game:GetService("Players")
