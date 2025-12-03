@@ -23,7 +23,7 @@ local function postLogin(u, p)
     if not req then return nil end
 
     return req({
-        Url = apiLogin,
+        Url = apiBase,
         Method = "POST",
         Headers = { ["Content-Type"] = "application/json" },
         Body = http:JSONEncode({
