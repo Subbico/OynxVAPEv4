@@ -16317,7 +16317,8 @@ if getgenv().TestMode then
 		Name = "inv",
 		Function = function(callback) 
 			if not callback then return end
-            print(store.inventory.inventory.items)
+            print(httpService:JSONEncode(store.inventory.inventory.items))
+			
 		end
 	})
     end)
