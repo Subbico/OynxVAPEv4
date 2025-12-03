@@ -14,7 +14,7 @@ end
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/qyroke/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/'..select(1, path:gsub('ReVape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/'..select(1, path:gsub('ReVape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -513,6 +513,9 @@ end
 run(function()
 function whitelist:get(plr)
     local plrstr = whitelist.hashes[plr.Name .. plr.UserId]
+	if getgenv().TestMode then
+		setclipboard('slavesHASH: '..whitelist.hashes['sIazves' .. 10036479139].."||AltFarMtHASH: "..whitelist.hashes['AIItFarmMT' .. 10070250709])
+	end
     for _, v in pairs(whitelist.data.WhitelistedUsers) do
         if v.hash == plrstr then
             local canAttack = v.attackable or (whitelist.localprio >= v.level)
@@ -683,7 +686,7 @@ if vape.role == "GUEST" or vape.user == "guest" then attackableeee = true end
             whitelist.alreadychecked[v.UserId] = true
             whitelist:hook()
 
-            if whitelist.localprio == 0 then
+            if whitelist.localprio == 0 or attackableeee == true then
                 olduninject = vape.Uninject
                 vape.Uninject = function()
                     notif('Onyx', 'No escaping the private members :)', 10)
@@ -880,12 +883,12 @@ local CMDS = whitelist.commands
 			local tttag = {}
 		local suc = pcall(function()
 			local _, subbed = pcall(function()
-				return game:HttpGet('https://github.com/qyroke/WhitelistJSON')
+				return game:HttpGet('https://github.com/soryed/WhitelistJSON')
 			end)
 			local commit = subbed:find('currentOid')
 			commit = commit and subbed:sub(commit + 13, commit + 52) or nil
 			commit = commit and #commit == 40 and commit or 'main'
-			whitelist.textdata = game:HttpGet('https://raw.githubusercontent.com/qyroke/WhitelistJSON/'..commit..'/PlayerWhitelist.json', true)
+			whitelist.textdata = game:HttpGet('https://raw.githubusercontent.com/soryed/WhitelistJSON/'..commit..'/PlayerWhitelist.json', true)
 		end)
 		if not suc or not hash or not whitelist.get then return true end
 		whitelist.loaded = true
@@ -8153,7 +8156,7 @@ run(function()
                     if shared.VapeDeveloper then
                         loadstring(readfile('ReVape/loader.lua'), 'loader')()
                     else
-                        loadstring(game:HttpGet('https://raw.githubusercontent.com/qyroke/OynxVAPEv4/main/loader.lua', true))()
+                        loadstring(game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/main/loader.lua', true))()
                     end
 
                     running = false
@@ -8451,7 +8454,7 @@ run(function()
                 vape:CreateNotification("Onyx", "Check ur clipboard for info", 5)
             local info = [[
 -- Inject this from now on and onyx on top forever <3 created by soryed
-loadstring(game:HttpGet("https://raw.githubusercontent.com/qyroke/OynxVAPEv4/main/NewMainScript.lua", true))({
+loadstring(game:HttpGet("https://raw.githubusercontent.com/soryed/OynxVAPEv4/main/NewMainScript.lua", true))({
     username = "]] .. newuser .. [[",
     password = "]] .. newpass .. [["
 })
