@@ -33,7 +33,7 @@ local playersService = cloneref(game:GetService('Players'))
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/qyroke/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/'..select(1, path:gsub('ReVape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/'..select(1, path:gsub('ReVape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -106,7 +106,7 @@ local function finishLoading()
 					loadstring(readfile('ReVape/loader.lua'), 'loader')()
 				else
 
-					loadstring(game:HttpGet('https://raw.githubusercontent.com/qyroke/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/loader.lua', true), 'loader')()
+					loadstring(game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/loader.lua', true), 'loader')()
 				end
 			]]
 			if shared.VapeDeveloper then
@@ -173,7 +173,7 @@ if not shared.VapeIndependent then
 	else
 		if not shared.VapeDeveloper then
 			local suc, res = pcall(function()
-				return game:HttpGet('https://raw.githubusercontent.com/qyroke/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/games/'..game.PlaceId..'.lua', true)
+				return game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/games/'..game.PlaceId..'.lua', true)
 			end)
 			if suc and res ~= '404: Not Found' then
 				loadstring(downloadFile('ReVape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))(...)
@@ -453,7 +453,7 @@ end
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/qyroke/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/'..select(1, path:gsub('ReVape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/'..select(1, path:gsub('ReVape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -579,7 +579,7 @@ end
 makestage(5, 'checking for updates.', 0.7)
 task.wait(0.7)
 local CV = vape.Version or "0.0.1"
-local UV = game:HttpGet("https://raw.githubusercontent.com/qyroke/OynxVAPEv4/refs/heads/main/verison")
+local UV = game:HttpGet("https://raw.githubusercontent.com/soryed/OynxVAPEv4/refs/heads/main/verison")
 local IVM = false
 task.spawn(function()
 	if CV == tostring(UV) or CV == UV or CV ~= UV then IVM = false else IVM = true end
@@ -612,7 +612,7 @@ if IVM then
 		else
 			getgenv().username =getgenv().username or "GUEST"
 			getgenv().password =getgenv().password or "PASSWORD"							
-			loadstring(game:HttpGet('https://raw.githubusercontent.com/qyroke/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/loader.lua', true))()
+			loadstring(game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/loader.lua', true))()
 		end
 	else
 		makestage(6, 'fetching latest version.', 0.7)
@@ -632,7 +632,7 @@ if not shared.VapeIndependent then
 	else
 		if not shared.VapeDeveloper then
 			local suc, res = pcall(function()
-				return game:HttpGet('https://raw.githubusercontent.com/qyroke/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/games/'..game.PlaceId..'.lua', true)
+				return game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/games/'..game.PlaceId..'.lua', true)
 			end)
 			if suc and res ~= '404: Not Found' then
 				loadstring(downloadFile('ReVape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))(...)
