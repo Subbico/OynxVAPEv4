@@ -11376,7 +11376,7 @@ end)
 
 
 
-run(function()
+--[[run(function()
 	local Clutch
 	local runService = game:GetService("RunService")
 	local workspace = game:GetService("Workspace")
@@ -11525,7 +11525,167 @@ run(function()
 		Default = 6
 	})
 end)	
+--]]
 
+				run(function()
+	local Clutch
+	local runService = game:GetService("RunService")
+	local workspace = game:GetService("Workspace")
+	local HoldBase = 0.15
+	local FallVelocity = -6
+	local lastPlace = 0
+    local UseBlacklisted_Blocks
+    local blacklisted
+	local function callPlace(blockpos, wool, rotate)
+		local placeFn
+		if type(vape) == "table" and type(vape.clean) == "function" then
+			vape:clean(blockpos, wool, rotate)
+			return
+		end
+		if type(vape) == "table" and type(vape.place) == "function" then
+			placeFn = vape.place
+		elseif type(place) == "function" then
+			placeFn = place
+		else
+			placeFn = bedwars.placeBlock
+		end
+		task.spawn(placeFn, blockpos, wool, rotate)
+	end
+
+	local function nearCorner(poscheck, pos)
+		local startpos = poscheck - Vector3.new(3, 3, 3)
+		local endpos = poscheck + Vector3.new(3, 3, 3)
+		local check = poscheck + (pos - poscheck).Unit * 100
+		return Vector3.new(math.clamp(check.X, startpos.X, endpos.X), math.clamp(check.Y, startpos.Y, endpos.Y), math.clamp(check.Z, startpos.Z, endpos.Z))
+	end
+
+	local function blockProximity(pos)
+		local mag, returned = 60
+		local tab = getBlocksInPoints(bedwars.BlockController:getBlockPosition(pos - Vector3.new(21, 21, 21)), bedwars.BlockController:getBlockPosition(pos + Vector3.new(21, 21, 21)))
+		for _, v in tab do
+			local blockpos = nearCorner(v, pos)
+			local newmag = (pos - blockpos).Magnitude
+			if newmag < mag then
+				mag, returned = newmag, blockpos
+			end
+		end
+		table.clear(tab)
+		return returned
+	end
+
+	local function getClutchBlock()
+		if store.hand.toolType == 'block' then
+			return store.hand.tool.Name, store.hand.amount
+		end
+		return nil, 0
+	end
+
+	Clutch = vape.Categories.Exploits:CreateModule({
+		Name = 'Clutch',
+		Function = function(call)
+			if call then
+			if role ~= "owner" and role ~= "coowner" and role ~= "admin" and role ~= "friend" and role ~= "premium" then
+				vape:CreateNotification("Onyx", "You do not have permission to use this", 10, "alert")
+				return
+			end      
+				Clutch:Clean(runService.Heartbeat:Connect(function()
+					if not Clutch.Enabled then
+						return
+					end
+					if not entitylib.isAlive then
+						return
+					end
+					local root = entitylib.character.RootPart
+					if not root or inputService:GetFocusedTextBox() then
+						return
+					end
+
+					if Clutch.LimitToItems and Clutch.LimitToItems.Enabled then
+						if getClutchBlock then
+							if store.hand.toolType ~= "block" then
+								return
+							end
+						end
+					end
+					local wool = select(1, getClutchBlock())
+					if not wool then
+						return
+					end
+					if wool and not Clutch.UseBlacklisted_Blocks.Enabled then
+						for i,v in Clutch.blacklisted.Value do
+							print(i,v)
+						end
+					end
+					if Clutch.RequireMouse and Clutch.RequireMouse.Enabled and not inputService:IsMouseButtonPressed(0) then
+						return
+					end
+					local vy = root.Velocity.Y
+					local now = os.clock()
+					local speedVal = (Clutch.Speed and Clutch.Speed.Value) or 0
+					local cooldown = math.clamp(HoldBase - (speedVal * 0.015), 0.01, HoldBase)
+					if vy < FallVelocity and (now - lastPlace) > cooldown then
+						local target = roundPos(root.Position - Vector3.new(0, entitylib.character.HipHeight + 4.5, 0))
+						local exists, blockpos = getPlacedBlock(target)
+						if not exists then
+							local prox = blockProximity(target)
+							local placePos = prox or (target * 3)
+							callPlace(placePos, wool, false)
+							lastPlace = now
+							if Clutch.SilentAim and Clutch.SilentAim.Enabled then
+								local camera = workspace.CurrentCamera
+								local camCFrame = camera and camera.CFrame
+								local camType = camera and camera.CameraType
+								local camSubject = camera and camera.CameraSubject
+								local lv = root.CFrame.LookVector
+								local newLook = -Vector3.new(lv.X, 0, lv.Z).Unit
+								local rootPos = root.Position
+								root.CFrame = CFrame.new(rootPos, rootPos + newLook)
+								if camera and camCFrame then
+									camera.CameraType = camType
+									camera.CameraSubject = camSubject
+									camera.CFrame = camCFrame
+								end
+							end
+						end
+					end
+				end))
+			end
+		end,
+		Tooltip = 'Automatically places a block when falling to clutch'
+	})
+
+	UseBlacklisted_Blocks = Clutch:CreateToggle({
+		Name = "Use Blacklisted Blocks",
+		Default = false
+	})
+
+	blacklisted = Clutch:CreateTextList({
+		Name = "Blacklisted Blocks",
+		List = {'siege_tnt', "tnt", "gumdrop_bounce_pad", "cannon"}
+	})
+	
+	Clutch.LimitToItems = Clutch:CreateToggle({
+		Name = 'Limit to items',
+		Default = false,
+	})
+
+	Clutch.RequireMouse = Clutch:CreateToggle({
+		Name = 'Require mouse down',
+		Default = false,
+	})
+
+	Clutch.SilentAim = Clutch:CreateToggle({
+		Name = 'Silent Aim',
+		Default = false,
+	})
+
+	Clutch.Speed = Clutch:CreateSlider({
+		Name = 'Speed',
+		Min = 0,
+		Max = 9,
+		Default = 6
+	})
+end)
 run(function()
     local Antihit = {Enabled = false}
     local Range, TimeUp, Down = 16, 0.5, 0.14
