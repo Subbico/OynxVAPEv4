@@ -11661,7 +11661,7 @@ end)
 
 	blacklisted = Clutch:CreateTextList({
 		Name = "Blacklisted Blocks",
-		Placeholder = {'siege_tnt', "tnt", "gumdrop_bounce_pad", "cannon"}
+		Placeholder = "siege_tnt,tnt,gumdrop_bounce_pad,cannon"
 	})
 	
 	Clutch.LimitToItems = Clutch:CreateToggle({
