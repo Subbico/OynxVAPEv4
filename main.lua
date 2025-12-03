@@ -31,6 +31,7 @@ end
 local playersService = cloneref(game:GetService('Players'))
 
 local function downloadFile(path, func)
+	print(select(1, path:gsub('ReVape/', ''))
 	if not isfile(path) then
 		local suc, res = pcall(function()
 			if getgenv().TestMode then
