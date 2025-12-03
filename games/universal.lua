@@ -223,11 +223,8 @@ local hash = loadstring(downloadFile('ReVape/libraries/hash.lua'), 'hash')()
 local prediction = loadstring(downloadFile('ReVape/libraries/prediction.lua'), 'prediction')()
 entitylib = loadstring(downloadFile('ReVape/libraries/entity.lua'), 'entitylibrary')()
 local loginlib = loadstring(downloadFile("ReVape/libraries/login.lua"), "login")()
-local annclib = loadstring(downloadFile('ReVape/libraries/announcement.lua'), 'announcement')()
 local createlib = loadstring(downloadFile('ReVape/libraries/create.lua'), 'create')()
-local baselib = loadstring(downloadFile('ReVape/libraries/base64.lua'), 'base64')()
-local spotifylib = loadstring(downloadFile('ReVape/libraries/spotify.lua'), 'spotify')()
-
+prediction = loadstring(downloadFile('ReVape/libraries/prediction.lua'), 'prediction')()
 
 local whitelist = {
     alreadychecked = {},
