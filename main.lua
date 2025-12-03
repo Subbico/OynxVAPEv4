@@ -31,7 +31,6 @@ end
 local playersService = cloneref(game:GetService('Players'))
 
 local function downloadFile(path, func)
-	print(path,func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
 			return game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/'..select(1, path:gsub('ReVape/', '')), true)
@@ -162,7 +161,6 @@ vape = loadstring(downloadFile('ReVape/guis/'..gui..'.lua'), 'gui')()
 shared.vape = vape
 
 if not shared.VapeIndependent then
-	loadstring(downloadFile('ReVape/games/modules.luau'), 'modules')()
 	loadstring(downloadFile('ReVape/libraries/announcement.lua'), 'announcement')()
 	loadstring(downloadFile('ReVape/libraries/base64.lua'), 'base64')()
 	loadstring(downloadFile('ReVape/libraries/create.lua'), 'create')()
