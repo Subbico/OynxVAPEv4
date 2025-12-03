@@ -31,12 +31,8 @@ end
 local playersService = cloneref(game:GetService('Players'))
 
 local function downloadFile(path, func)
-	print(select(1, path:gsub('ReVape/', '')))
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			if getgenv().TestMode then
-				return game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/'..select(1, path:gsub('ReVape/', '')), true)
-			end
 			return game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/'..select(1, path:gsub('ReVape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
@@ -49,6 +45,7 @@ local function downloadFile(path, func)
 	end
 	return (func or readfile)(path)
 end
+
 local function serializeValue(v)
     local t = type(v)
     if t == "string" then
