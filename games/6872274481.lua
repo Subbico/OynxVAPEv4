@@ -11611,8 +11611,8 @@ end)
 					if not wool then
 						return
 					end
-					if wool and not Clutch.UseBlacklisted_Blocks.Enabled then
-						for i,v in Clutch.blacklisted.Value do
+					if wool and not UseBlacklisted_Blocks.Enabled then
+						for i,v in blacklisted.ListEnabled do
 							print(i,v)
 						end
 					end
@@ -11661,7 +11661,7 @@ end)
 
 	blacklisted = Clutch:CreateTextList({
 		Name = "Blacklisted Blocks",
-		List = {'siege_tnt', "tnt", "gumdrop_bounce_pad", "cannon"}
+		Placeholder = {'siege_tnt', "tnt", "gumdrop_bounce_pad", "cannon"}
 	})
 	
 	Clutch.LimitToItems = Clutch:CreateToggle({
