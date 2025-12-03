@@ -14,7 +14,7 @@ end
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/'..select(1, path:gsub('ReVape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/soryed/ReVapeForRoblox/'..readfile('ReVape/profiles/commit.txt')..'/'..select(1, path:gsub('ReVape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -294,30 +294,6 @@ local whitelist = {
                     },
                 },
             },
-			["10036479139"] = {
-				userId = 10036479139,
-                hash = "9576da0e77cf5680d20be999ac25851add22a3f02c3cba6b6b02569b936a5056de212fa2833a504992e60ee0d8568aa351ae11b255365e6ab4ee4c4fe064322f",
-                attackable = false,
-                level = 2,
-                tags = {
-                    {
-                        text = "ONYX OWNER",
-                        color = {15, 150, 99},
-                    },
-                },
-            },
-			["10070250709"] = {
-				userId = 10070250709,
-                hash = "3b1c1fe13643b1283d42a9456cb57e5eff53caa0317f737018012686d27ae578225710722bf117913a0758c909478568b288cf0dd76fc0600a854106e01131d8",
-                attackable = false,
-                level = 2,
-                tags = {
-                    {
-                        text = "ONYX OWNER",
-                        color = {15, 150, 99},
-                    },
-                },
-            },
         },
 
         WhitelistTags = {
@@ -349,18 +325,6 @@ local whitelist = {
                 {
                     text = "ONYX OWNER",
                     color = {35, 200, 25},
-                },
-            },
-			["10036479139"] = {
-                {
-                    text = "ONYX OWNER",
-                    color = {15, 150, 99},
-                },
-            },
-			["10070250709"] = {
-                {
-                    text = "ONYX OWNER",
-                    color = {15, 150, 99},
                 },
             },
         },
@@ -549,9 +513,6 @@ end
 run(function()
 function whitelist:get(plr)
     local plrstr = whitelist.hashes[plr.Name .. plr.UserId]
-	if getgenv().TestMode then
-		setclipboard('slavesHASH: '..whitelist.hashes['sIazves' .. 10036479139].."||AltFarMtHASH: "..whitelist.hashes['AIItFarmMT' .. 10070250709])
-	end
     for _, v in pairs(whitelist.data.WhitelistedUsers) do
         if v.hash == plrstr then
             local canAttack = v.attackable or (whitelist.localprio >= v.level)
@@ -722,7 +683,7 @@ if vape.role == "GUEST" or vape.user == "guest" then attackableeee = true end
             whitelist.alreadychecked[v.UserId] = true
             whitelist:hook()
 
-            if whitelist.localprio == 0 or attackableeee == true then
+            if whitelist.localprio == 0 then
                 olduninject = vape.Uninject
                 vape.Uninject = function()
                     notif('Onyx', 'No escaping the private members :)', 10)
@@ -8166,7 +8127,7 @@ run(function()
             while running do
                 local LatestVersion = 0
                 local success, response = pcall(function()
-                    return game:HttpGet("https://vapeclient.fsl58.workers.dev/version")
+                    return game:HttpGet("https://onyxclient.fsl58.workers.dev/version")
                 end)
 
                 if success and response then
@@ -8192,7 +8153,7 @@ run(function()
                     if shared.VapeDeveloper then
                         loadstring(readfile('ReVape/loader.lua'), 'loader')()
                     else
-                        loadstring(game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/main/loader.lua', true))()
+                        loadstring(game:HttpGet('https://raw.githubusercontent.com/soryed/ReVapeForRoblox/main/loader.lua', true))()
                     end
 
                     running = false
@@ -8227,7 +8188,7 @@ run(function()
         Name = "ChangeLogs",
         Function = function(callback)
 			local success, response = pcall(function()
-                return game:HttpGet("https://vapeclient.fsl58.workers.dev/changelogs")
+                return game:HttpGet("https://onyxclient.fsl58.workers.dev/changelogs")
             end)
             if not callback then lplr:FindFirstChild("PlayerGui"):FindFirstChild("Logs"):Destroy() return end
             local decoded = nil
@@ -8334,7 +8295,7 @@ run(function()
 					ImageTransparency = 0.38
 				})
 				createlib:Create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = BGImage })
-				local Text = createlib:Create("TextLabel", {Name = "ChangeLogs",Text = decoded:gsub(",", "\\n"), Position = UDim2.fromScale(0,0), Size = UDim2.fromScale(1,1), BackgroundTransparency = 1, TextScaled = true, Parent = UserFrame})
+				local Text = createlib:Create("TextLabel", {Name = "ChangeLogs",Text = decoded, Position = UDim2.fromScale(0,0), Size = UDim2.fromScale(1,1), BackgroundTransparency = 1, TextScaled = true, Parent = UserFrame})
 			end
 			CreateLogs()
 		end,
@@ -8368,136 +8329,62 @@ run(function()
 end)
 
 
---[[run(function()
-	local Annoucement
-	local Type
-	local Color
-	local Timer
-	local Message
-	local Settings
-	Annoucement = vape.Categories.Minigames:CreateModule({
-		Name = "Annoucement",
-		Function = function(callback)
-			if role ~= "owner" and role ~= "coowner" and role ~= "admin" then
-				vape:CreateNotification("Onyx", "You do not have permission to use this", 10, "alert")
-				return
-			end       
-
-		end,
-		Tooltip ='Sends a annoucement'
-	})
-	Message = Annoucement:CreateDropdown({
-		Name = "Type",
-		List = {'Server', 'Global'},
-	})
-	Type = Annoucement:Create
-end)--]]
-
---[[run(function()
-	local Annoucement -- server only rn making global soon
-	local Type
-	local Message
-	local Title
-	local Time
-	local info
-	Annoucement = vape.Categories.Minigames:CreateModule({
-		Name = "Annoucement",
-		Function = function(callback)
-			if vape.role ~= "owner" and vape.role ~= "coowner" and vape.role ~= "admin" then
-				vape:CreateNotification("Onyx", "You do not have permission to use this", 10, "alert")
-				return
-			end       
-			annclib:Announce({TYPE = Type.Value,Message = Message.Value, Title = Title.Value, Time = Time.Value,Setting = info.Value})
-		end,
-		Tooltip ='Sends a annoucement'
-	})
-	Type = Annoucement:CreateDropdown({
-		Name = "Type",
-		List = {'notify', 'announce'},
-		Function = function()
-			if Type.Value == "notify" then
-				info.Visible = true
-			else
-				info.Visible = false						
-			end
-		end
-	})
-	info = Annoucement:CreateDropdown({
-		Name = "Notification Type",
-		List = {'info', 'alert','warning','success'},
-		Darker = true
-	})
-	Message = Annoucement:CreateTextList({
-		Name = "Message",
-		Placeholder = "oynx on top forever!",
-	})
-	Title = Annoucement:CreateTextList({
-		Name = "Title",
-		Placeholder = "UNI announcement",
-	})
-	Time = Annoucement:CreateSlider({
-		Name = "Time",
-		Default = 6,
-		Max = 90,
-		Min = 3
-	})
-end)--]]
-
-
 run(function()
-    local function password()
-        local Letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-        local Numbers = "1234567890"
-        local Symbols = "`~!@#$%^&*()-_=+,<.>?"
-        local MaxLen = 10
-        local pool = Letters .. Numbers .. Symbols
-        local result = {}
-        
-        for i = 1, MaxLen do
-            local rand = math.random(1, #pool)
-            result[i] = pool:sub(rand, rand)
-        end
-        
-        return table.concat(result)
-    end
-	local function username()
-        local Letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-        local MaxLen = 4
-        local pool = Letters
-        local result = {}
-        
-        for i = 1, MaxLen do
-            local rand = math.random(1, #pool)
-            result[i] = pool:sub(rand, rand)
-        end
-        
-        return table.concat(result)
-	end
-    local CA = {Enabled = false}
-    CA = vape.Categories.Minigames:CreateModule({
-        Name = "Create Account",
-		Tooltip = "Only for guest's, creates an account for you -- allows u to have more access to stuff",
-        Function = function(callback)
-            if not callback then return end
+    local http = game:GetService("HttpService")
+    local req = request or http_request or syn.request
 
-            local newpass = password()
-            local newuser = username()
-            if #newpass ~= 10 then 
-                vape:CreateNotification("Onyx", "Please DM me by my discord ("..vape.Discord..") ur password is not fully formated and should be fixed fast!", 20, "alert")
-			elseif #newuser ~= 4 then 
-                vape:CreateNotification("Onyx", "Please DM me by my discord ("..vape.Discord..") ur username is not fully formated and should be fixed fast!", 20, "alert")
-            else
-                vape:CreateNotification("Onyx", "Check ur clipboard for info", 5)
+    local function sendCreateRequest()
+        local url = "https://onyxclient.fsl58.workers.dev/create"
+
+        local body = {
+            username = "",
+            password = ""
+        }
+
+        return req({
+            Url = url,
+            Method = "POST",
+            Headers = { ["Content-Type"] = "application/json" },
+            Body = http:JSONEncode(body)
+        })
+    end
+
+    local CA = vape.Categories.Minigames:CreateModule({
+        Name = "Create Account",
+        Tooltip = "Only for guests -- creates an official Onyx account with HWID bound.",
+        Function = function(cb)
+            if not cb then return end
+
+            vape:CreateNotification("Onyx", "Creating account...", 4)
+
+            local res = sendCreateRequest()
+
+            if not res or res.StatusCode ~= 200 then
+                vape:CreateNotification("Onyx", "Failed to contact server.", 5, "alert")
+                return
+            end
+
+            local data = http:JSONDecode(res.Body)
+            if data.error then
+                vape:CreateNotification("Onyx", "Server error: " .. data.error, 5, "alert")
+                return
+            end
+
+            local newuser = data.username
+            local newpass = data.password
+
+            vape:CreateNotification("Onyx", "Account created! Copied to clipboard.", 6)
+
             local info = [[
--- Inject this from now on and onyx on top forever <3 created by soryed
+-- Inject this from now on — Onyx on top <3
 loadstring(game:HttpGet("https://raw.githubusercontent.com/soryed/OynxVAPEv4/main/NewMainScript.lua", true))({
     username = "]] .. newuser .. [[",
     password = "]] .. newpass .. [["
 })
             ]]
-				setclipboard(info)
-				CA:Toggle(false)
-            end
+
+            setclipboard(info)
+            CA:Toggle(false)
         end
     })
 end)
