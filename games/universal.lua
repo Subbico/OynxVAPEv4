@@ -226,8 +226,6 @@ entitylib = loadstring(downloadFile('ReVape/libraries/entity.lua'), 'entitylibra
 local loginlib = loadstring(downloadFile("ReVape/libraries/login.lua"), "login")()
 local annclib = loadstring(downloadFile('ReVape/libraries/announcement.lua'), 'announcement')()
 local createlib = loadstring(downloadFile('ReVape/libraries/create.lua'), 'create')()
-local baselib = loadstring(downloadFile('ReVape/libraries/base64.lua'), 'base64')()
-local spotifylib = loadstring(downloadFile('ReVape/libraries/spotify.lua'), 'spotify')()
 
 
 local whitelist = {
