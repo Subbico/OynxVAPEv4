@@ -6748,12 +6748,6 @@ run(function()
 		Name = 'Wall Check',
 		Default = false,
 	})
-	SB = Breaker:CreateToggle({
-		Name = "Same Block",
-		Tooltip = "Mines the same block no matter what!",
-		Default = false
-		Visible = false
-	})
 	Custom = Breaker:CreateTextList({
 		Name = 'Custom',
 		Function = function()
