@@ -2697,21 +2697,27 @@ run(function()
 end)
 	
 run(function()
+	local SilentAim = {Enabled = true}
 	local TargetPart
 	local Targets
 	local FOV
 	local OtherProjectiles
+	local Blacklist
+
 	local rayCheck = RaycastParams.new()
 	rayCheck.FilterType = Enum.RaycastFilterType.Include
 	rayCheck.FilterDescendantsInstances = {workspace:FindFirstChild('Map')}
 	local old
 	
-	local ProjectileAimbot = vape.Categories.Combat:CreateModule({
-		Name = 'SilentAim',
+	local ProjectileAimbot; ProjectileAimbot = vape.Categories.Blatant:CreateModule({
+		Name = 'Projectile Aimbot',
 		Function = function(callback)
 			if callback then
+				local newpos = nil
+				local canshoot = os.clock()
+				
 				old = bedwars.ProjectileController.calculateImportantLaunchValues
-				bedwars.ProjectileController.calculateImportantLaunchValues = function(...)
+				bedwars.ProjectileController.calculateImportantLaunchValues = function(...)	
 					local self, projmeta, worldmeta, origin, shootpos = ...
 					local plr = entitylib.EntityMouse({
 						Part = 'RootPart',
@@ -2731,11 +2737,15 @@ run(function()
 						if (not OtherProjectiles.Enabled) and not projmeta.projectile:find('arrow') then
 							return old(...)
 						end
+
+						if table.find(Blacklist.ListEnabled, projmeta.projectile) then
+							return old(...)
+						end
 	
 						local meta = projmeta:getProjectileMeta()
 						local lifetime = (worldmeta and meta.predictionLifetimeSec or meta.lifetimeSec or 3)
 						local gravity = (meta.gravitationalAcceleration or 196.2) * projmeta.gravityMultiplier
-						local projSpeed = (meta.launchVelocity or 100)
+						local projSpeed = (meta.launchVelocity or 100) 
 						local offsetpos = pos + (projmeta.projectile == 'owl_projectile' and Vector3.zero or projmeta.fromPositionOffset)
 						local balloons = plr.Character:GetAttribute('InflatedBalloons')
 						local playerGravity = workspace.Gravity
@@ -2747,8 +2757,8 @@ run(function()
 						if plr.Character.PrimaryPart:FindFirstChild('rbxassetid://8200754399') then
 							playerGravity = 6
 						end
-	
-						if plr.Player:GetAttribute('IsOwlTarget') then
+
+						if not plr.NPC and plr.Player:GetAttribute('IsOwlTarget') then
 							for _, owl in collectionService:GetTagged('Owl') do
 								if owl:GetAttribute('Target') == plr.Player.UserId and owl:GetAttribute('Status') == 2 then
 									playerGravity = 0
@@ -2757,9 +2767,14 @@ run(function()
 						end
 	
 						local newlook = CFrame.new(offsetpos, plr[TargetPart.Value].Position) * CFrame.new(projmeta.projectile == 'owl_projectile' and Vector3.zero or Vector3.new(bedwars.BowConstantsTable.RelX, bedwars.BowConstantsTable.RelY, bedwars.BowConstantsTable.RelZ))
-						local calc = prediction.SolveTrajectory(newlook.p, projSpeed, gravity, plr[TargetPart.Value].Position, projmeta.projectile == 'telepearl' and Vector3.zero or plr[TargetPart.Value].Velocity, playerGravity, plr.HipHeight, plr.Jumping and 42.6 or nil, rayCheck)
+						local calc = prediction.SolveTrajectory(newlook.p, projSpeed, gravity, plr[TargetPart.Value].Position, projmeta.projectile == 'telepearl' and Vector3.zero or plr[TargetPart.Value].Velocity, playerGravity, plr.HipHeight, plr.Jumping and 42.6 or nil, rayCheck, plr.Humanoid.MoveDirection ~= Vector3.zero, lplr:GetNetworkPing())
 						if calc then
-							targetinfo.Targets[plr] = tick() + 1
+							targetinfo.Targets[plr] = os.clock() + 1
+							if not SilentAim.Enabled then
+								newpos = calc - Vector3.new(0, 4, 0)
+								canshoot = os.clock() + 0.1
+								return old(...)
+							end
 							return {
 								initialVelocity = CFrame.new(newlook.Position, calc).LookVector * projSpeed,
 								positionFrom = offsetpos,
@@ -2772,6 +2787,23 @@ run(function()
 	
 					return old(...)
 				end
+
+				ProjectileAimbot:Clean(runService.PreRender:Connect(function(delta)
+					if canshoot > os.clock() and newpos and mousemoverel and not SilentAim.Enabled and entitylib.EntityMouse({
+						Part = 'RootPart',
+						Range = FOV.Value,
+						Players = Targets.Players.Enabled,
+						NPCs = Targets.NPCs.Enabled,
+						Wallcheck = Targets.Walls.Enabled
+					}) then
+						local pos, vis = workspace.CurrentCamera:WorldToViewportPoint(newpos)
+
+						if vis and isrbxactive() then
+							pos = (Vector2.new(pos.X, pos.Y) - game.UserInputService:GetMouseLocation()) * (100 * delta / 3)
+							mousemoverel(pos.X, pos.Y)
+						end
+					end
+				end))
 			else
 				bedwars.ProjectileController.calculateImportantLaunchValues = old
 			end
@@ -2792,126 +2824,477 @@ run(function()
 		Max = 1000,
 		Default = 1000
 	})
+	--SilentAim = ProjectileAimbot:CreateToggle({Name = 'Silent aim', Default = true})
 	OtherProjectiles = ProjectileAimbot:CreateToggle({
 		Name = 'Other Projectiles',
-		Default = true
+		Default = true,
+		Function = function(call)
+			if Blacklist then
+				Blacklist.Object.Visible = call
+			end
+		end
+	})
+	Blacklist = ProjectileAimbot:CreateTextList({
+		Name = 'Blacklist',
+		Darker = true,
+		Default = {'telepearl'}
 	})
 end)
 	
-run(function()
-	local ProjectileAura
-	local Targets
-	local Range
-	local List
-	local rayCheck = RaycastParams.new()
-	rayCheck.FilterType = Enum.RaycastFilterType.Include
-	local projectileRemote = {InvokeServer = function() end}
-	local FireDelays = {}
-	task.spawn(function()
-		projectileRemote = bedwars.Client:Get(remotes.FireProjectile).instance
-	end)
-	
-	local function getAmmo(check)
-		for _, item in store.inventory.inventory.items do
-			if check.ammoItemTypes and table.find(check.ammoItemTypes, item.itemType) then
-				return item.itemType
-			end
-		end
-	end
-	
-	local function getProjectiles()
-		local items = {}
-		for _, item in store.inventory.inventory.items do
-			local proj = bedwars.ItemMeta[item.itemType].projectileSource
-			local ammo = proj and getAmmo(proj)
-			if ammo and table.find(List.ListEnabled, ammo) then
-				table.insert(items, {
-					item,
-					ammo,
-					proj.projectileType(ammo),
-					proj
-				})
-			end
-		end
-		return items
-	end
-	
-	ProjectileAura = vape.Categories.Blatant:CreateModule({
-		Name = 'ProjectileAura',
-		Function = function(callback)
-			if callback then
-				repeat
-					if (workspace:GetServerTimeNow() - bedwars.SwordController.lastAttack) > 0.5 then
-						local ent = entitylib.EntityPosition({
-							Part = 'RootPart',
-							Range = Range.Value,
-							Players = Targets.Players.Enabled,
-							NPCs = Targets.NPCs.Enabled,
-							Wallcheck = Targets.Walls.Enabled
-						})
-	
-						if ent then
-							local pos = entitylib.character.RootPart.Position
-							for _, data in getProjectiles() do
-								local item, ammo, projectile, itemMeta = unpack(data)
-								if (FireDelays[item.itemType] or 0) < tick() then
-									rayCheck.FilterDescendantsInstances = {workspace.Map}
-									local meta = bedwars.ProjectileMeta[projectile]
-									local projSpeed, gravity = meta.launchVelocity, meta.gravitationalAcceleration or 196.2
-									local calc = prediction.SolveTrajectory(pos, projSpeed, gravity, ent.RootPart.Position, ent.RootPart.Velocity, workspace.Gravity, ent.HipHeight, ent.Jumping and 42.6 or nil, rayCheck)
-									if calc then
-										targetinfo.Targets[ent] = tick() + 1
-										local switched = switchItem(item.tool)
-	
-										task.spawn(function()
-											local dir, id = CFrame.lookAt(pos, calc).LookVector, httpService:GenerateGUID(true)
-											local shootPosition = (CFrame.new(pos, calc) * CFrame.new(Vector3.new(-bedwars.BowConstantsTable.RelX, -bedwars.BowConstantsTable.RelY, -bedwars.BowConstantsTable.RelZ))).Position
-											bedwars.ProjectileController:createLocalProjectile(meta, ammo, projectile, shootPosition, id, dir * projSpeed, {drawDurationSeconds = 1})
-											local res = projectileRemote:InvokeServer(item.tool, ammo, projectile, shootPosition, pos, dir * projSpeed, id, {drawDurationSeconds = 1, shotId = httpService:GenerateGUID(false)}, workspace:GetServerTimeNow() - 0.045)
-											if not res then
-												FireDelays[item.itemType] = tick()
-											else
-												local shoot = itemMeta.launchSound
-												shoot = shoot and shoot[math.random(1, #shoot)] or nil
-												if shoot then
-													bedwars.SoundManager:playSound(shoot)
-												end
-											end
-										end)
-	
-										FireDelays[item.itemType] = tick() + itemMeta.fireDelaySec
-										if switched then
-											task.wait(0.05)
-										end
-									end
-								end
-							end
-						end
-					end
-					task.wait(0.1)
-				until not ProjectileAura.Enabled
-			end
-		end,
-		Tooltip = 'Shoots people around you'
-	})
-	Targets = ProjectileAura:CreateTargets({
-		Players = true,
-		Walls = true
-	})
-	List = ProjectileAura:CreateTextList({
-		Name = 'Projectiles',
-		Default = {'arrow', 'snowball'}
-	})
-	Range = ProjectileAura:CreateSlider({
-		Name = 'Range',
-		Min = 1,
-		Max = 50,
-		Default = 50,
-		Suffix = function(val)
-			return val == 1 and 'stud' or 'studs'
-		end
-	})
+local ProjectileAura
+local Targets
+local Range
+local List
+local ReverseList
+local LimitItem
+local FireWait
+local AutoSwitch
+local IgnoreList
+
+local rayCheck = RaycastParams.new()
+rayCheck.FilterType = Enum.RaycastFilterType.Include
+rayCheck.FilterDescendantsInstances = {workspace:FindFirstChild('Map')}
+
+local projectileRemote = {InvokeServer = function() end}
+local FireDelays = {}
+local normalMode = true -- Default mode is normal
+
+-- Add ToolCheck support
+local function isToolCheckEnabled()
+    -- Check if ToolCheck module exists and is enabled
+    local toolCheck = vape.Modules.ToolCheck
+    return toolCheck and toolCheck.Enabled
+end
+
+-- Enhanced tool state tracking with ToolCheck support
+local toolState = {
+    previous = {
+        tool = nil,
+        slot = nil,
+        switchTime = 0
+    },
+    switching = false,
+    cooldown = 0.3,
+    manualSwitchOccurred = false,
+    toolCheckActive = false  -- Track if ToolCheck is preventing switches
+}
+
+-- Function to detect manual switches
+local function setupManualSwitchDetection()
+    local lastAutoSwitchTime = 0
+    
+    -- Monitor inventory changes
+    store.inventory.observeInventory(function()
+        if toolState.switching then return end  -- Ignore changes during auto-switching
+        
+        -- If the change happened significantly after our last auto-switch, consider it manual
+        if tick() - lastAutoSwitchTime > 0.2 then
+            toolState.manualSwitchOccurred = true
+        end
+    end)
+    
+    -- Update lastAutoSwitchTime when we perform an auto-switch
+    local originalSwitchHotbarItem = switchHotbarItem
+    switchHotbarItem = function(...)
+        lastAutoSwitchTime = tick()
+        return originalSwitchHotbarItem(...)
+    end
+end
+
+task.spawn(function()
+    projectileRemote = bedwars.Client:Get(remotes.FireProjectile).instance
 end)
+
+local function getAmmo(check)
+    for _, item in store.inventory.inventory.items do
+        if check.ammoItemTypes and table.find(check.ammoItemTypes, item.itemType) then
+            return item.itemType
+        end
+    end
+end
+
+local function hasProjectileEquipped(check)
+    if not store.hand.tool then return false end
+    local itemMeta = bedwars.ItemMeta[store.hand.tool.Name]
+    return itemMeta and itemMeta.projectileSource == check
+end
+
+local function isItemInIgnoreList()
+    if not store.hand.tool then return false end
+    return table.find(IgnoreList.ListEnabled, store.hand.tool.Name) ~= nil
+end
+
+local function isHoldingBlock()
+    if not store.hand.tool then return false end
+    local itemMeta = bedwars.ItemMeta[store.hand.tool.Name]
+    return itemMeta and itemMeta.block ~= nil
+end
+
+local function isHoldingBreakingTool()
+    if not store.hand.tool then return false end
+    
+    if isItemInIgnoreList() then
+        return true
+    end
+    
+    local itemMeta = bedwars.ItemMeta[store.hand.tool.Name]
+    if not itemMeta then return false end
+    if itemMeta.sword then return false end
+    if itemMeta.breakType then return true end
+    
+    if itemMeta.pickaxe or itemMeta.axe or itemMeta.shears or itemMeta.hammer then
+        return true
+    end
+    
+    local breakingItems = {
+        "wood_pickaxe", "stone_pickaxe", "iron_pickaxe", "diamond_pickaxe",
+        "wood_axe", "stone_axe", "iron_axe", "diamond_axe",
+        "shears", "hammer"
+    }
+    
+    for _, item in ipairs(breakingItems) do
+        if store.hand.tool.Name == item then
+            return true
+        end
+    end
+    
+    for toolType, tool in pairs(store.tools or {}) do
+        if tool.itemType == store.hand.tool.Name and toolType ~= "sword" then
+            return true
+        end
+    end
+    
+    return false
+end
+
+local function getCurrentHotbarSlot()
+    if not store.hand.tool then return nil end
+    
+    for i, v in pairs(store.inventory.hotbar) do
+        if v.item and store.hand.tool.Name == v.item.itemType then
+            return i - 1
+        end
+    end
+    return nil
+end
+
+-- Enhanced switchHotbarItem function with ToolCheck support
+local function switchHotbarItem(itemType)
+    if not itemType or toolState.switching then return false end
+    
+    -- Check if ToolCheck is enabled and blocking switches
+    if isToolCheckEnabled() then
+        local toolCheck = vape.Modules.ToolCheck
+        if toolCheck and toolCheck.Enabled then
+            -- Check if we're currently in a tool-check protected state
+            if toolCheck.isProtected and toolCheck:isProtected() then
+                toolState.toolCheckActive = true
+                return false
+            end
+        end
+    end
+    
+    -- Don't switch if we're in cooldown
+    if tick() - toolState.previous.switchTime < toolState.cooldown then
+        return false
+    end
+    
+    toolState.manualSwitchOccurred = false
+    toolState.toolCheckActive = false
+    
+    -- Save current item state before switching
+    if store.hand.tool then
+        toolState.previous.tool = store.hand.tool
+        toolState.previous.slot = getCurrentHotbarSlot()
+        toolState.previous.switchTime = tick()
+    end
+    
+    -- Find and switch to the target item
+    for i, v in pairs(store.inventory.hotbar) do
+        if v.item and v.item.itemType == itemType then
+            toolState.switching = true
+            if hotbarSwitch then
+                hotbarSwitch(i - 1)
+                task.delay(0.1, function()
+                    toolState.switching = false
+                end)
+                return true
+            end
+        end
+    end
+    
+    return false
+end
+
+-- Improved switchBackToPreviousTool function with ToolCheck support
+local function switchBackToPreviousTool()
+    if toolState.switching then return false end
+    
+    -- Don't switch back if ToolCheck is active
+    if toolState.toolCheckActive then
+        toolState.previous.tool = nil
+        toolState.previous.slot = nil
+        return false
+    end
+    
+    -- Don't switch back if player has manually switched items
+    if toolState.manualSwitchOccurred then
+        toolState.previous.tool = nil
+        toolState.previous.slot = nil
+        return false
+    end
+    
+    -- Check ToolCheck state before switching back
+    if isToolCheckEnabled() then
+        local toolCheck = vape.Modules.ToolCheck
+        if toolCheck and toolCheck.Enabled and toolCheck.isProtected and toolCheck:isProtected() then
+            toolState.toolCheckActive = true
+            return false
+        end
+    end
+    
+    if toolState.previous.slot ~= nil then
+        toolState.switching = true
+        hotbarSwitch(toolState.previous.slot)
+        
+        task.delay(0.1, function()
+            toolState.previous.tool = nil
+            toolState.previous.slot = nil
+            toolState.switching = false
+        end)
+        return true
+    elseif toolState.previous.tool then
+        toolState.switching = true
+        store.hand:EquipTool(toolState.previous.tool)
+        
+        task.delay(0.1, function()
+            toolState.previous.tool = nil
+            toolState.previous.slot = nil
+            toolState.switching = false
+        end)
+        return true
+    end
+    
+    return false
+end
+
+-- Update the projectile handling with ToolCheck support
+local function handleProjectileSwitch(item, itemMeta)
+    local switched = false
+    
+    if AutoSwitch.Enabled and not hasProjectileEquipped(itemMeta) then
+        if not isHoldingBlock() and not isHoldingBreakingTool() then
+            -- Check ToolCheck state before attempting switch
+            if not isToolCheckEnabled() or not vape.Modules.ToolCheck:isProtected() then
+                switched = switchHotbarItem(item.itemType)
+                if switched then
+                    task.wait(0.15)
+                end
+            end
+        end
+    end
+    
+    return switched
+end
+
+local function getProjectiles()
+    local items = {}
+    for _, item in store.inventory.inventory.items do
+        local itemMeta = bedwars.ItemMeta[item.itemType]
+        local proj = itemMeta and itemMeta.projectileSource
+        local ammo = proj and getAmmo(proj)
+        
+        if normalMode then
+            if ammo and table.find(List.ListEnabled, ammo) then
+                if not LimitItem.Enabled or hasProjectileEquipped(proj) then
+                    table.insert(items, {item, ammo, proj.projectileType(ammo), proj})
+                end
+            end
+        else
+            if ammo and not table.find(ReverseList.ListEnabled, ammo) then
+                if not LimitItem.Enabled or hasProjectileEquipped(proj) then
+                    table.insert(items, {item, ammo, proj.projectileType(ammo), proj})
+                end
+            end
+        end
+    end
+    return items
+end
+
+-- Initialize the manual switch detection
+task.spawn(function()
+    setupManualSwitchDetection()
+end)
+
+ProjectileAura = vape.Categories.Blatant:CreateModule({
+    Name = 'ProjectileAura',
+    Function = function(callback)
+        if callback then
+            repeat
+                if (workspace:GetServerTimeNow() - bedwars.SwordController.lastAttack) > 0.5 then
+                    local ent = entitylib.EntityPosition({
+                        Part = 'RootPart',
+                        Range = Range.Value,
+                        Players = Targets.Players.Enabled,
+                        NPCs = Targets.NPCs.Enabled,
+                        Wallcheck = Targets.Walls.Enabled
+                    })
+                    
+                    if ent then
+                        local pos = entitylib.character.RootPart.Position
+                        for _, data in getProjectiles() do
+                            local item, ammo, projectile, itemMeta = unpack(data)
+                            if (FireDelays[item.itemType] or 0) < tick() then
+                                rayCheck.FilterDescendantsInstances = {workspace.Map}
+                                local meta = bedwars.ProjectileMeta[projectile]
+                                local projSpeed = meta.launchVelocity
+                                local gravity = (meta.gravitationalAcceleration or 196.2)
+                                
+                                local balloons = ent.Character:GetAttribute('InflatedBalloons')
+                                local playerGravity = workspace.Gravity
+                                
+                                if balloons and balloons > 0 then
+                                    playerGravity = (workspace.Gravity * (1 - ((balloons >= 4 and 1.2 or balloons >= 3 and 1 or 0.975))))
+                                end
+                                
+                                if ent.Character.PrimaryPart:FindFirstChild('rbxassetid://8200754399') then
+                                    playerGravity = 6
+                                end
+                                
+                                local shootPosition = pos + (projectile == 'owl_projectile' and Vector3.zero or itemMeta.fromPositionOffset or Vector3.zero)
+                                
+                                local calc = prediction.SolveTrajectory(
+                                    shootPosition,
+                                    projSpeed,
+                                    gravity,
+                                    ent.RootPart.Position,
+                                    projectile == 'telepearl' and Vector3.zero or ent.RootPart.Velocity,
+                                    playerGravity,
+                                    ent.HipHeight,
+                                    ent.Jumping and 42.6 or nil,
+                                    rayCheck
+                                )
+                                
+                                if calc then
+                                    targetinfo.Targets[ent] = tick() + 1
+                                    local switched = handleProjectileSwitch(item, itemMeta)
+                                    
+                                    task.spawn(function()
+                                        local dir = CFrame.lookAt(shootPosition, calc).LookVector
+                                        local id = httpService:GenerateGUID(true)
+                                        
+                                        bedwars.ProjectileController:createLocalProjectile(
+                                            meta,
+                                            ammo,
+                                            projectile,
+                                            shootPosition,
+                                            id,
+                                            dir * projSpeed,
+                                            {drawDurationSeconds = 1}
+                                        )
+                                        
+                                        local res = projectileRemote:InvokeServer(
+                                            item.tool,
+                                            ammo,
+                                            projectile,
+                                            shootPosition,
+                                            pos,
+                                            dir * projSpeed,
+                                            id,
+                                            {drawDurationSeconds = 1, shotId = httpService:GenerateGUID(false)},
+                                            workspace:GetServerTimeNow() - 0.045
+                                        )
+                                        
+                                        if not res then
+                                            FireDelays[item.itemType] = tick()
+                                        else
+                                            local shoot = itemMeta.launchSound
+                                            shoot = shoot and shoot[math.random(1, #shoot)] or nil
+                                            if shoot then
+                                                bedwars.SoundManager:playSound(shoot)
+                                            end
+                                        end
+                                    end)
+                                    
+                                    FireDelays[item.itemType] = tick() + math.max(itemMeta.fireDelaySec, FireWait.Value)
+                                    
+                                    if switched and not toolState.toolCheckActive then
+                                        task.wait(0.2)
+                                        local switchBack = switchBackToPreviousTool()
+                                        if switchBack then
+                                            task.wait(0.1)
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+                task.wait(0.1)
+            until not ProjectileAura.Enabled
+        end
+    end,
+    Tooltip = 'Shoots people around you with enhanced prediction'
+})
+
+Targets = ProjectileAura:CreateTargets({
+    Players = true,
+    Walls = true
+})
+
+List = ProjectileAura:CreateTextList({
+    Name = 'Projectiles',
+    Default = {'arrow', 'snowball'}
+})
+
+ReverseList = ProjectileAura:CreateTextList({
+    Name = 'Reverse Projectiles',
+    Default = {}
+})
+
+Range = ProjectileAura:CreateSlider({
+    Name = 'Range',
+    Min = 1,
+    Max = 50,
+    Default = 50,
+    Suffix = function(val)
+        return val == 1 and 'stud' or 'studs'
+    end
+})
+
+LimitItem = ProjectileAura:CreateToggle({
+    Name = 'Limit to items',
+    Default = true,
+    Tooltip = 'Only shoots when projectile tools are equipped'
+})
+
+AutoSwitch = ProjectileAura:CreateToggle({
+    Name = 'Auto Switch',
+    Default = false,
+    Tooltip = 'Automatically switches to the projectile tool and back (except when holding blocks or breaking tools)'
+})
+
+FireWait = ProjectileAura:CreateSlider({
+    Name = 'Fire Wait',
+    Min = 1,
+    Max = 5,
+    Default = 1,
+    Suffix = 'sec'
+})
+
+IgnoreList = ProjectileAura:CreateTextList({
+    Name = 'Ignore Items',
+    Default = {}
+})
+
+ProjectileAura:CreateToggle({
+    Name = 'Mode Toggle',
+    Default = true,
+    Tooltip = 'Toggle between normal and reverse mode',
+    Function = function(enabled)
+        normalMode = enabled
+    end
+})
 	
 
 	
@@ -3968,583 +4351,292 @@ run(function()
 end)
 	
 local Scaffold
-
 local Expand
-
 local Tower
-
 local Downwards
-
 local Diagonal
-
 local LimitItem
-
 local Mouse
-
 local TowerCPS
 
 -- Pre-calculate adjacent positions
-
 local adjacent = table.create(26)
-
 for x = -3, 3, 3 do
-
-for y = -3, 3, 3 do
-
-for z = -3, 3, 3 do
-
-if x ~= 0 or y ~= 0 or z ~= 0 then
-
-adjacent[#adjacent + 1] = Vector3.new(x, y, z)
-
-end
-
-end
-
-end
-
+    for y = -3, 3, 3 do
+        for z = -3, 3, 3 do
+            if x ~= 0 or y ~= 0 or z ~= 0 then
+                adjacent[#adjacent + 1] = Vector3.new(x, y, z)
+            end
+        end
+    end
 end
 
 local lastpos = Vector3.zero
-
 local label
-
 local lastPlace = 0
 
--- Animation constants
-local JUMP_ANIMATION_ID = "rbxassetid://180435571"
-local FALL_ANIMATION_ID = "rbxassetid://180436148"
-local jumpAnimTrack, fallAnimTrack
-local lastYVel = 0
-local isFalling = false
-
 -- Optimized corner check using cached unit vectors
-
 local function nearCorner(poscheck, pos)
-
-local offset = Vector3.new(3, 3, 3)
-
-local startpos = poscheck - offset
-
-local endpos = poscheck + offset
-
-local dir = (pos - poscheck).Unit
-
-local check = poscheck + dir * 100
-
-return Vector3.new(
-
-math.clamp(check.X, startpos.X, endpos.X),
-
-math.clamp(check.Y, startpos.Y, endpos.Y),
-
-math.clamp(check.Z, startpos.Z, endpos.Z)
-
-)
-
+    local offset = Vector3.new(3, 3, 3)
+    local startpos = poscheck - offset
+    local endpos = poscheck + offset
+    local dir = (pos - poscheck).Unit
+    local check = poscheck + dir * 100
+    return Vector3.new(
+        math.clamp(check.X, startpos.X, endpos.X),
+        math.clamp(check.Y, startpos.Y, endpos.Y),
+        math.clamp(check.Z, startpos.Z, endpos.Z)
+    )
 end
 
 -- Optimized block proximity check with local caching
-
 local function blockProximity(pos)
-
-local mag = 60
-
-local returned
-
-local startPos = bedwars.BlockController:getBlockPosition(pos - Vector3.new(15, 15, 15))
-
-local endPos = bedwars.BlockController:getBlockPosition(pos + Vector3.new(15, 15, 15))
-
-local blocks = getBlocksInPoints(startPos, endPos)
-
-
-for i = 1, #blocks do
-
-local blockpos = blocks[i]
-
-local newmag = (pos - blockpos).Magnitude
-
-if newmag < mag then
-
-mag = newmag
-
-returned = blockpos
-
-end
-
-end
-
-table.clear(blocks)
-
-return returned
-
+    local mag = 60
+    local returned
+    local startPos = bedwars.BlockController:getBlockPosition(pos - Vector3.new(15, 15, 15))
+    local endPos = bedwars.BlockController:getBlockPosition(pos + Vector3.new(15, 15, 15))
+    local blocks = getBlocksInPoints(startPos, endPos)
+    
+    for i = 1, #blocks do
+        local blockpos = nearCorner(blocks[i], pos)
+        local newmag = (pos - blockpos).Magnitude
+        if newmag < mag then
+            mag = newmag
+            returned = blockpos
+        end
+    end
+    table.clear(blocks)
+    return returned
 end
 
 -- Optimized adjacent check
-
 local function checkAdjacent(pos)
-
-for i = 1, #adjacent do
-
-if getPlacedBlock(pos + adjacent[i]) then
-
-return true
-
-end
-
-end
-
-return false
-
+    for i = 1, #adjacent do
+        if getPlacedBlock(pos + adjacent[i]) then
+            return true
+        end
+    end
+    return false
 end
 
 local function getScaffoldBlock()
-
-if store.hand.toolType == 'block' then
-
-return store.hand.tool.Name, store.hand.amount
-
-elseif not LimitItem.Enabled then
-
-local wool, amount = getWool()
-
-if wool then
-
-return wool, amount
-
-end
-
-for _, item in store.inventory.inventory.items do
-
-if bedwars.ItemMeta[item.itemType].block then
-
-return item.itemType, item.amount
-
-end
-
-end
-
-end
-
-return nil, 0
-
-end
-
--- Animation functions
-local function playJumpAnim()
-    if not entitylib.isAlive or not entitylib.character:FindFirstChild("Humanoid") then return end
-    local humanoid = entitylib.character.Humanoid
-    if not jumpAnimTrack then
-        local anim = Instance.new("Animation")
-        anim.AnimationId = JUMP_ANIMATION_ID
-        jumpAnimTrack = humanoid:LoadAnimation(anim)
+    if store.hand.toolType == 'block' then
+        return store.hand.tool.Name, store.hand.amount
+    elseif not LimitItem.Enabled then
+        local wool, amount = getWool()
+        if wool then
+            return wool, amount
+        end
+        for _, item in store.inventory.inventory.items do
+            if bedwars.ItemMeta[item.itemType].block then
+                return item.itemType, item.amount
+            end
+        end
     end
-    jumpAnimTrack:Play()
-    task.delay(0.3, function() if jumpAnimTrack then jumpAnimTrack:Stop() end end)
-end
-
-local function playFallAnim()
-    if not entitylib.isAlive or not entitylib.character:FindFirstChild("Humanoid") then return end
-    local humanoid = entitylib.character.Humanoid
-    if not fallAnimTrack then
-        local anim = Instance.new("Animation")
-        anim.AnimationId = FALL_ANIMATION_ID
-        fallAnimTrack = humanoid:LoadAnimation(anim)
-    end
-    fallAnimTrack:Play()
+    return nil, 0
 end
 
 Scaffold = vape.Categories.Utility:CreateModule({
-
-Name = 'Scaffold',
-
-Function = function(callback)
-
-if label then
-
-label.Visible = callback
-
-end
-
-if callback then
-
-local towerThread
-
-
--- Fast tower building with CPS
-
-local function startTowerBuild()
-
-if towerThread then return end
-
-towerThread = task.spawn(function()
-
-local lastBlockPos = nil
-
-while Scaffold.Enabled and Tower.Enabled and (inputService:IsKeyDown(Enum.KeyCode.Space) or
-
-(inputService.TouchEnabled and lplr.PlayerGui.TouchGui.TouchControlFrame.JumpButton.ImageTransparency < 1)) do
-
-local currentTime = tick()
-
-if currentTime - lastPlace >= (1 / TowerCPS.GetRandomValue()) then
-
-if entitylib.isAlive then
-
-local root = entitylib.character.RootPart
-
-if root then
-
-local wool = getScaffoldBlock()
-
--- Only apply velocity if we have blocks or LimitItem is off, and on ground
-
-if (wool or not LimitItem.Enabled) and not bedwars.AppController:isLayerOpen(bedwars.UILayers.MAIN) and entitylib.character.Humanoid.FloorMaterial ~= nil then
-
-root.Velocity = Vector3.new(root.Velocity.X, 38, root.Velocity.Z)
-
--- Animation logic
-
-if root.Velocity.Y > 0 and lastYVel <= 0 then
-
-playJumpAnim()
-
-end
-
-if root.Velocity.Y < -5 and not isFalling then
-
-isFalling = true
-
-playFallAnim()
-
-end
-
-if root.Velocity.Y > -2 and isFalling then
-
-isFalling = false
-
-if fallAnimTrack then fallAnimTrack:Stop() end
-
-end
-
-lastYVel = root.Velocity.Y
-
-end
-
-
--- Place blocks if we have them
-
-if wool and not bedwars.AppController:isLayerOpen(bedwars.UILayers.MAIN) then
-
-local pos = root.Position - Vector3.new(0, entitylib.character.HipHeight + 1.5, 0)
-
-local roundedPos = roundPos(pos)
-
-
--- Only do proximity check if position changed
-
-if lastBlockPos ~= roundedPos then
-
-local block, blockpos = getPlacedBlock(roundedPos)
-
-if not block then
-
-blockpos = checkAdjacent(blockpos 3) and blockpos 3 or blockProximity(pos)
-
-if blockpos then
-
-task.spawn(bedwars.placeBlock, blockpos, wool, false)
-
-lastPlace = currentTime
-
-lastBlockPos = roundedPos
-
-end
-
-end
-
-end
-
-end
-
-end
-
-end
-
-task.wait(0.01)
-
-end
-
-towerThread = nil
-
-end)
-
-end
-
-
-local function stopTowerBuild()
-
-if towerThread then
-
-task.cancel(towerThread)
-
-towerThread = nil
-
-end
-
-end
-
-
--- Input handlers for tower
-
-Scaffold:Clean(inputService.InputBegan:Connect(function(input)
-
-if input.KeyCode == Enum.KeyCode.Space and Tower.Enabled then
-
-startTowerBuild()
-
-end
-
-end))
-
-
-Scaffold:Clean(inputService.InputEnded:Connect(function(input)
-
-if input.KeyCode == Enum.KeyCode.Space then
-
-stopTowerBuild()
-
-end
-
-end))
-
-
--- Mobile support
-
-if inputService.TouchEnabled then
-
-pcall(function()
-
-local touchGui = lplr.PlayerGui:WaitForChild("TouchGui", 2)
-
-if touchGui then
-
-local jumpButton = touchGui.TouchControlFrame:WaitForChild("JumpButton", 2)
-
-if jumpButton then
-
-Scaffold:Clean(jumpButton.MouseButton1Down:Connect(function()
-
-if Tower.Enabled then startTowerBuild() end
-
-end))
-
-Scaffold:Clean(jumpButton.MouseButton1Up:Connect(stopTowerBuild))
-
-end
-
-end
-
-end)
-
-end
-
--- Main scaffold loop
-
-repeat
-
-if entitylib.isAlive then
-
-local wool, amount = getScaffoldBlock()
-
-if Mouse.Enabled and not inputService:IsMouseButtonPressed(0) then
-
-wool = nil
-
-end
-
-if label then
-
-amount = amount or 0
-
-label.Text = amount..' <font color="rgb(170, 170, 170)">(Scaffold)</font>'
-
-label.TextColor3 = Color3.fromHSV((amount / 128) / 2.8, 0.86, 1)
-
-end
-
-if wool then
-
-local root = entitylib.character.RootPart
-
-local moveDir = entitylib.character.Humanoid.MoveDirection
-
-local hipHeight = entitylib.character.HipHeight
-
-local downOffset = Downwards.Enabled and inputService:IsKeyDown(Enum.KeyCode.LeftShift) and 4.5 or 1.5
-
-local basePos = root.Position - Vector3.new(0, hipHeight + downOffset, 0)
-
-for i = Expand.Value, 1, -1 do
-
-local currentpos = roundPos(basePos + moveDir (i 3))
-
-
-if Diagonal.Enabled then
-
-local angle = math.abs(math.round(math.deg(math.atan2(-moveDir.X, -moveDir.Z)) / 45) * 45)
-
-if angle % 90 == 45 then
-
-local dt = (lastpos - currentpos)
-
-if ((dt.X == 0 and dt.Z ~= 0) or (dt.X ~= 0 and dt.Z == 0)) and
-
-((lastpos - root.Position) * Vector3.new(1, 0, 1)).Magnitude < 2.5 then
-
-currentpos = lastpos
-
-end
-
-end
-
-end
-
-local block, blockpos = getPlacedBlock(currentpos)
-
-if not block then
-
-blockpos = checkAdjacent(blockpos 3) and blockpos 3 or blockProximity(currentpos)
-
-if blockpos then
-
-task.spawn(bedwars.placeBlock, blockpos, wool, false)
-
-end
-
-end
-
-lastpos = currentpos
-
-end
-
-end
-
-end
-
-task.wait(0.01)
-
-until not Scaffold.Enabled
-
-else
-
-Label = nil
-
-end
-
-end,
-
-Tooltip = 'Helps you make bridges/scaffold walk.'
-
+    Name = 'Scaffold',
+    Function = function(callback)
+        if label then
+            label.Visible = callback
+        end
+
+        if callback then
+            local towerThread
+            
+            -- Fast tower building with CPS
+            local function startTowerBuild()
+                if towerThread then return end
+                towerThread = task.spawn(function()
+                    local lastBlockPos = nil
+                    while Scaffold.Enabled and Tower.Enabled and (inputService:IsKeyDown(Enum.KeyCode.Space) or 
+                        (inputService.TouchEnabled and lplr.PlayerGui.TouchGui.TouchControlFrame.JumpButton.ImageTransparency < 1)) do
+                        local currentTime = tick()
+                        if currentTime - lastPlace >= (1 / TowerCPS.GetRandomValue()) then
+                            if entitylib.isAlive then
+                                local root = entitylib.character.RootPart
+                                if root then
+                                    local wool = getScaffoldBlock()
+                                    -- Only apply velocity if we have blocks or LimitItem is off
+                                    if (wool or not LimitItem.Enabled) and not bedwars.AppController:isLayerOpen(bedwars.UILayers.MAIN) then
+                                        root.Velocity = Vector3.new(root.Velocity.X, 38, root.Velocity.Z)
+                                    end
+                                    
+                                    -- Place blocks if we have them
+                                    if wool and not bedwars.AppController:isLayerOpen(bedwars.UILayers.MAIN) then
+                                        local pos = root.Position - Vector3.new(0, entitylib.character.HipHeight + 1.5, 0)
+                                        local roundedPos = roundPos(pos)
+                                        
+                                        -- Only do proximity check if position changed
+                                        if lastBlockPos ~= roundedPos then
+                                            local block, blockpos = getPlacedBlock(roundedPos)
+                                            if not block then
+                                                blockpos = checkAdjacent(blockpos * 3) and blockpos * 3 or blockProximity(pos)
+                                                if blockpos then
+                                                    task.spawn(bedwars.placeBlock, blockpos, wool, false)
+                                                    lastPlace = currentTime
+                                                    lastBlockPos = roundedPos
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                        task.wait(0.01)
+                    end
+                    towerThread = nil
+                end)
+            end
+            
+            local function stopTowerBuild()
+                if towerThread then
+                    task.cancel(towerThread)
+                    towerThread = nil
+                end
+            end
+            
+            -- Input handlers for tower
+            Scaffold:Clean(inputService.InputBegan:Connect(function(input)
+                if input.KeyCode == Enum.KeyCode.Space and Tower.Enabled then
+                    startTowerBuild()
+                end
+            end))
+            
+            Scaffold:Clean(inputService.InputEnded:Connect(function(input)
+                if input.KeyCode == Enum.KeyCode.Space then
+                    stopTowerBuild()
+                end
+            end))
+            
+            -- Mobile support
+            if inputService.TouchEnabled then
+                pcall(function()
+                    local touchGui = lplr.PlayerGui:WaitForChild("TouchGui", 2)
+                    if touchGui then
+                        local jumpButton = touchGui.TouchControlFrame:WaitForChild("JumpButton", 2)
+                        if jumpButton then
+                            Scaffold:Clean(jumpButton.MouseButton1Down:Connect(function()
+                                if Tower.Enabled then startTowerBuild() end
+                            end))
+                            Scaffold:Clean(jumpButton.MouseButton1Up:Connect(stopTowerBuild))
+                        end
+                    end
+                end)
+            end
+
+            -- Main scaffold loop
+            repeat
+                if entitylib.isAlive then
+                    local wool, amount = getScaffoldBlock()
+
+                    if Mouse.Enabled and not inputService:IsMouseButtonPressed(0) then
+                        wool = nil
+                    end
+
+                    if label then
+                        amount = amount or 0
+                        label.Text = amount..' <font color="rgb(170, 170, 170)">(Scaffold)</font>'
+                        label.TextColor3 = Color3.fromHSV((amount / 128) / 2.8, 0.86, 1)
+                    end
+
+                    if wool then
+                        local root = entitylib.character.RootPart
+                        local moveDir = entitylib.character.Humanoid.MoveDirection
+                        local hipHeight = entitylib.character.HipHeight
+                        local downOffset = Downwards.Enabled and inputService:IsKeyDown(Enum.KeyCode.LeftShift) and 4.5 or 1.5
+                        local basePos = root.Position - Vector3.new(0, hipHeight + downOffset, 0)
+
+                        for i = Expand.Value, 1, -1 do
+                            local currentpos = roundPos(basePos + moveDir * (i * 3))
+                            
+                            if Diagonal.Enabled then
+                                local angle = math.abs(math.round(math.deg(math.atan2(-moveDir.X, -moveDir.Z)) / 45) * 45)
+                                if angle % 90 == 45 then
+                                    local dt = (lastpos - currentpos)
+                                    if ((dt.X == 0 and dt.Z ~= 0) or (dt.X ~= 0 and dt.Z == 0)) and 
+                                       ((lastpos - root.Position) * Vector3.new(1, 0, 1)).Magnitude < 2.5 then
+                                        currentpos = lastpos
+                                    end
+                                end
+                            end
+
+                            local block, blockpos = getPlacedBlock(currentpos)
+                            if not block then
+                                blockpos = checkAdjacent(blockpos * 3) and blockpos * 3 or blockProximity(currentpos)
+                                if blockpos then
+                                    task.spawn(bedwars.placeBlock, blockpos, wool, false)
+                                end
+                            end
+                            lastpos = currentpos
+                        end
+                    end
+                end
+                task.wait(0.01)
+            until not Scaffold.Enabled
+        else
+            Label = nil
+        end
+    end,
+    Tooltip = 'Helps you make bridges/scaffold walk.'
 })
 
 Expand = Scaffold:CreateSlider({
-
-Name = 'Expand',
-
-Min = 1,
-
-Max = 6
-
+    Name = 'Expand',
+    Min = 1,
+    Max = 6
 })
 
 Tower = Scaffold:CreateToggle({
-
-Name = 'Tower',
-
-Default = true
-
+    Name = 'Tower',
+    Default = true
 })
 
 Downwards = Scaffold:CreateToggle({
-
-Name = 'Downwards',
-
-Default = true
-
+    Name = 'Downwards',
+    Default = true
 })
 
 Diagonal = Scaffold:CreateToggle({
-
-Name = 'Diagonal',
-
-Default = true
-
+    Name = 'Diagonal',
+    Default = true
 })
 
 LimitItem = Scaffold:CreateToggle({Name = 'Limit to items'})
-
 Mouse = Scaffold:CreateToggle({Name = 'Require mouse down'})
 
 Count = Scaffold:CreateToggle({
-
-Name = 'Block Count',
-
-Function = function(callback)
-
-if callback then
-
-label = Instance.new('TextLabel')
-
-label.Size = UDim2.fromOffset(100, 20)
-
-label.Position = UDim2.new(0.5, 6, 0.5, 60)
-
-label.BackgroundTransparency = 1
-
-label.AnchorPoint = Vector2.new(0.5, 0)
-
-label.Text = '0'
-
-label.TextColor3 = Color3.new(0, 1, 0)
-
-label.TextSize = 18
-
-label.RichText = true
-
-label.Font = Enum.Font.Arial
-
-label.Visible = Scaffold.Enabled
-
-label.Parent = vape.gui
-
-else
-
-label:Destroy()
-
-label = nil
-
-end
-
-end
-
+    Name = 'Block Count',
+    Function = function(callback)
+        if callback then
+            label = Instance.new('TextLabel')
+            label.Size = UDim2.fromOffset(100, 20)
+            label.Position = UDim2.new(0.5, 6, 0.5, 60)
+            label.BackgroundTransparency = 1
+            label.AnchorPoint = Vector2.new(0.5, 0)
+            label.Text = '0'
+            label.TextColor3 = Color3.new(0, 1, 0)
+            label.TextSize = 18
+            label.RichText = true
+            label.Font = Enum.Font.Arial
+            label.Visible = Scaffold.Enabled
+            label.Parent = vape.gui
+        else
+            label:Destroy()
+            label = nil
+        end
+    end
 })
 
 TowerCPS = Scaffold:CreateTwoSlider({
-
-Name = 'Tower CPS',
-
-Min = 1,
-
-Max = 40,
-
-DefaultMin = 20,
-
-DefaultMax = 20,
-
-Darker = true
-
+    Name = 'Tower CPS',
+    Min = 1,
+    Max = 40,
+    DefaultMin = 20,
+    DefaultMax = 20,
+    Darker = true
 })
 	
 run(function()
