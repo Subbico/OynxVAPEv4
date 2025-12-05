@@ -15,7 +15,7 @@ local function downloadFile(path, func)
 	print(path,func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/'..select(1, path:gsub('ReVape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/Subbico/OynxVAPEv4/'..readfile('ReVape/profiles/commit.txt')..'/'..select(1, path:gsub('ReVape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -879,12 +879,12 @@ local CMDS = whitelist.commands
 			local tttag = {}
 		local suc = pcall(function()
 			local _, subbed = pcall(function()
-				return game:HttpGet('https://github.com/soryed/WhitelistJSON')
+				return game:HttpGet('https://github.com/Subbico/WhitelistJSON')
 			end)
 			local commit = subbed:find('currentOid')
 			commit = commit and subbed:sub(commit + 13, commit + 52) or nil
 			commit = commit and #commit == 40 and commit or 'main'
-			whitelist.textdata = game:HttpGet('https://raw.githubusercontent.com/soryed/WhitelistJSON/'..commit..'/PlayerWhitelist.json', true)
+			whitelist.textdata = game:HttpGet('https://raw.githubusercontent.com/Subbico/WhitelistJSON/'..commit..'/PlayerWhitelist.json', true)
 		end)
 		if not suc or not hash or not whitelist.get then return true end
 		whitelist.loaded = true
@@ -8152,7 +8152,7 @@ run(function()
                     if shared.VapeDeveloper then
                         loadstring(readfile('ReVape/loader.lua'), 'loader')()
                     else
-                        loadstring(game:HttpGet('https://raw.githubusercontent.com/soryed/OynxVAPEv4/main/loader.lua', true))()
+                        loadstring(game:HttpGet('https://raw.githubusercontent.com/Subbico/OynxVAPEv4/main/loader.lua', true))()
                     end
 
                     running = false
@@ -8376,7 +8376,7 @@ run(function()
 
             local info = [[
 -- Inject this from now on — Onyx on top <3
-loadstring(game:HttpGet("https://raw.githubusercontent.com/soryed/OynxVAPEv4/main/NewMainScript.lua", true))({
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Subbico/OynxVAPEv4/main/NewMainScript.lua", true))({
     username = "]] .. newuser .. [[",
     password = "]] .. newpass .. [["
 })
