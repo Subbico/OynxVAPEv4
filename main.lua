@@ -161,14 +161,25 @@ end
 vape = loadstring(downloadFile('ReVape/guis/'..gui..'.lua'), 'gui')()
 shared.vape = vape
 
+function downloadNeededFiles()
+	local s,e = pcall(function()
+		print('loaded')
+	end)
+	if s then
+		loadstring(downloadFile('ReVape/libraries/announcement.lua'), 'announcement')()
+		loadstring(downloadFile('ReVape/libraries/base64.lua'), 'base64')()
+		loadstring(downloadFile('ReVape/libraries/create.lua'), 'create')()
+		loadstring(downloadFile('ReVape/libraries/pathfind.lua'), 'pathfind')()
+		loadstring(downloadFile('ReVape/games/universal.lua'), 'universal')()
+	end
+	if not s and e then
+		loadstring(downloadFile('ReVape/games/universal.lua'), 'universal')()
+		error(e)
+	end
+end
+
 if not shared.VapeIndependent then
---	loadstring(downloadFile('ReVape/libraries/announcement.lua'), 'announcement')()
-	loadstring(downloadFile('ReVape/libraries/base64.lua'), 'base64')()
-	loadstring(downloadFile('ReVape/libraries/create.lua'), 'create')()
-	loadstring(downloadFile('ReVape/libraries/spotify.lua'), 'spotify')()
---	loadstring(downloadFile('ReVape/libraries/pathfind.lua'), 'pathfind')()
-	loadstring(downloadFile('ReVape/games/universal.lua'), 'universal')()
-	loadstring(downloadFile('ReVape/games/prediction.lua'), 'prediction')()
+	downloadNeededFiles()
 	if isfile('ReVape/games/'..game.PlaceId..'.lua') then
 		loadstring(readfile('ReVape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))(...)
 	else
