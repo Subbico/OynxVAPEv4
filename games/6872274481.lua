@@ -4352,7 +4352,6 @@ end)
 	
 local Scaffold
 local Expand
-local Tower
 local Downwards
 local Diagonal
 local LimitItem
@@ -4436,6 +4435,13 @@ local function getScaffoldBlock()
     return nil, 0
 end
 
+-- Animation manipulation
+local jumpAnim = Instance.new("Animation")
+jumpAnim.AnimationId = "http://www.roblox.com/asset/?id=507765000"
+local fallAnim = Instance.new("Animation")
+fallAnim.AnimationId = "http://www.roblox.com/asset/?id=507767968"
+local jumpTrack, fallTrack
+
 Scaffold = vape.Categories.Utility:CreateModule({
     Name = 'Scaffold',
     Function = function(callback)
@@ -4446,7 +4452,7 @@ Scaffold = vape.Categories.Utility:CreateModule({
         if callback then
             local towerThread
             
-            -- Fast tower building with CPS
+            -- Fast tower building with CPS and animation manipulation
             local function startTowerBuild()
                 if towerThread then return end
                 towerThread = task.spawn(function()
@@ -4457,11 +4463,28 @@ Scaffold = vape.Categories.Utility:CreateModule({
                         if currentTime - lastPlace >= (1 / TowerCPS.GetRandomValue()) then
                             if entitylib.isAlive then
                                 local root = entitylib.character.RootPart
-                                if root then
+                                local humanoid = entitylib.character.Humanoid
+                                if root and humanoid then
                                     local wool = getScaffoldBlock()
                                     -- Only apply velocity if we have blocks or LimitItem is off
                                     if (wool or not LimitItem.Enabled) and not bedwars.AppController:isLayerOpen(bedwars.UILayers.MAIN) then
                                         root.Velocity = Vector3.new(root.Velocity.X, 38, root.Velocity.Z)
+                                        
+                                        -- Play jump animation when going up
+                                        if not jumpTrack or not jumpTrack.IsPlaying then
+                                            jumpTrack = humanoid:LoadAnimation(jumpAnim)
+                                            jumpTrack.Priority = Enum.AnimationPriority.Action
+                                            jumpTrack:Play()
+                                            if fallTrack then fallTrack:Stop() end
+                                        end
+                                    else
+                                        -- Play fall animation when going down (not applying upward velocity)
+                                        if root.Velocity.Y < 0 and (not fallTrack or not fallTrack.IsPlaying) then
+                                            fallTrack = humanoid:LoadAnimation(fallAnim)
+                                            fallTrack.Priority = Enum.AnimationPriority.Action
+                                            fallTrack:Play()
+                                            if jumpTrack then jumpTrack:Stop() end
+                                        end
                                     end
                                     
                                     -- Place blocks if we have them
@@ -4496,6 +4519,11 @@ Scaffold = vape.Categories.Utility:CreateModule({
                     task.cancel(towerThread)
                     towerThread = nil
                 end
+                -- Stop animation tracks when stopping tower
+                if jumpTrack then jumpTrack:Stop() end
+                if fallTrack then fallTrack:Stop() end
+                jumpTrack = nil
+                fallTrack = nil
             end
             
             -- Input handlers for tower
@@ -4578,6 +4606,11 @@ Scaffold = vape.Categories.Utility:CreateModule({
             until not Scaffold.Enabled
         else
             Label = nil
+            -- Stop tracks when disabling
+            if jumpTrack then jumpTrack:Stop() end
+            if fallTrack then fallTrack:Stop() end
+            jumpTrack = nil
+            fallTrack = nil
         end
     end,
     Tooltip = 'Helps you make bridges/scaffold walk.'
@@ -4638,6 +4671,7 @@ TowerCPS = Scaffold:CreateTwoSlider({
     DefaultMax = 20,
     Darker = true
 })
+
 	
 run(function()
 	local ShopTierBypass
