@@ -1,4 +1,4 @@
-llocal run = function(func)
+local run = function(func)
 	func()
 end
 local cloneref = cloneref or function(obj)
@@ -1604,7 +1604,7 @@ run(function()
 				end))
 			end
 		end,
-		Tooltip = 'Smoothly aims to closest valid target'
+		Tooltip = 'Smoothly aims to closest valid target with sword'
 	})
 	Targets = AimAssist:CreateTargets({
 		Players = true,
@@ -1631,7 +1631,7 @@ run(function()
 		Min = 1,
 		Max = 30,
 		Default = 30,
-		Suffix = function(val)
+		Suffx = function(val)
 			return val == 1 and 'stud' or 'studs'
 		end
 	})
@@ -1650,6 +1650,7 @@ run(function()
 	})
 	StrafeIncrease = AimAssist:CreateToggle({Name = 'Strafe increase'})
 end)
+
 
 	
 run(function()
@@ -6866,170 +6867,254 @@ end)
 
 run(function()
 	local Breaker
-	local Delay
-	local AutoAim
-	local AimSpeed	
 	local Range
-	local Cache
+	local BreakSpeed
 	local UpdateRate
 	local Custom
 	local Bed
 	local LuckyBlock
-	local AutoTool
 	local IronOre
 	local Effect
 	local CustomHealth = {}
 	local Animation
 	local SelfBreak
-	local WallCheck
+	local InstantBreak
 	local LimitItem
 	local customlist, parts = {}, {}
-	
+	local WC
+	local AT
+	local NB
+	local SB
+	local old
+	local event
 	local function customHealthbar(self, blockRef, health, maxHealth, changeHealth, block)
-		pcall(function()
-			if block:GetAttribute('NoHealthbar') then return end
-			if not self.healthbarPart or not self.healthbarBlockRef or self.healthbarBlockRef.blockPosition ~= blockRef.blockPosition then
-				self.healthbarMaid:DoCleaning()
-				self.healthbarBlockRef = blockRef
-				local create = bedwars.Roact.createElement
-				local percent = math.clamp(health / maxHealth, 0, 1)
-				local cleanCheck = true
-				local part = Instance.new('Part')
-				part.Size = Vector3.one
-				part.CFrame = CFrame.new(bedwars.BlockController:getWorldPosition(blockRef.blockPosition))
-				part.Transparency = 1
-				part.Anchored = true
-				part.CanCollide = false
-				part.Parent = workspace
-				self.healthbarPart = part
-				bedwars.QueryUtil:setQueryIgnored(self.healthbarPart, true)
-		
-				local mounted = bedwars.Roact.mount(create('BillboardGui', {
-					Size = UDim2.fromOffset(249, 102),
-					StudsOffset = Vector3.new(0, 2.5, 0),
-					Adornee = part,
-					MaxDistance = 40,
-					AlwaysOnTop = true
+		if block:GetAttribute('NoHealthbar') then return end
+		if not self.healthbarPart or not self.healthbarBlockRef or self.healthbarBlockRef.blockPosition ~= blockRef.blockPosition then
+			self.healthbarMaid:DoCleaning()
+			self.healthbarBlockRef = blockRef
+			local create = bedwars.Roact.createElement
+			local percent = math.clamp(health / maxHealth, 0, 1)
+			local cleanCheck = true
+			local part = Instance.new('Part')
+			part.Size = Vector3.one
+			part.CFrame = CFrame.new(bedwars.BlockController:getWorldPosition(blockRef.blockPosition))
+			part.Transparency = 1
+			part.Anchored = true
+			part.CanCollide = false
+			part.Parent = workspace
+			self.healthbarPart = part
+			bedwars.QueryUtil:setQueryIgnored(self.healthbarPart, true)
+	
+			local mounted = bedwars.Roact.mount(create('BillboardGui', {
+				Size = UDim2.fromOffset(249, 102),
+				StudsOffset = Vector3.new(0, 2.5, 0),
+				Adornee = part,
+				MaxDistance = 40,
+				AlwaysOnTop = true
+			}, {
+				create('Frame', {
+					Size = UDim2.fromOffset(160, 50),
+					Position = UDim2.fromOffset(44, 32),
+					BackgroundColor3 = Color3.new(),
+					BackgroundTransparency = 0.5
 				}, {
+					create('UICorner', {CornerRadius = UDim.new(0, 5)}),
+					create('ImageLabel', {
+						Size = UDim2.new(1, 89, 1, 52),
+						Position = UDim2.fromOffset(-48, -31),
+						BackgroundTransparency = 1,
+						Image = getcustomasset('newvape/assets/new/blur.png'),
+						ScaleType = Enum.ScaleType.Slice,
+						SliceCenter = Rect.new(52, 31, 261, 502)
+					}),
+					create('TextLabel', {
+						Size = UDim2.fromOffset(145, 14),
+						Position = UDim2.fromOffset(13, 12),
+						BackgroundTransparency = 1,
+						Text = bedwars.ItemMeta[block.Name].displayName or block.Name,
+						TextXAlignment = Enum.TextXAlignment.Left,
+						TextYAlignment = Enum.TextYAlignment.Top,
+						TextColor3 = Color3.new(),
+						TextScaled = true,
+						Font = Enum.Font.Arial
+					}),
+					create('TextLabel', {
+						Size = UDim2.fromOffset(145, 14),
+						Position = UDim2.fromOffset(12, 11),
+						BackgroundTransparency = 1,
+						Text = bedwars.ItemMeta[block.Name].displayName or block.Name,
+						TextXAlignment = Enum.TextXAlignment.Left,
+						TextYAlignment = Enum.TextYAlignment.Top,
+						TextColor3 = color.Dark(uipallet.Text, 0.16),
+						TextScaled = true,
+						Font = Enum.Font.Arial
+					}),
 					create('Frame', {
-						Size = UDim2.fromOffset(160, 50),
-						Position = UDim2.fromOffset(44, 32),
-						BackgroundColor3 = Color3.new(),
-						BackgroundTransparency = 0.5
+						Size = UDim2.fromOffset(138, 4),
+						Position = UDim2.fromOffset(12, 32),
+						BackgroundColor3 = uipallet.Main
 					}, {
-						create('UICorner', {CornerRadius = UDim.new(0, 5)}),
-						create('ImageLabel', {
-							Size = UDim2.new(1, 89, 1, 52),
-							Position = UDim2.fromOffset(-48, -31),
-							BackgroundTransparency = 1,
-							Image = getcustomasset('catrewrite/assets/new/blur.png'),
-							ScaleType = Enum.ScaleType.Slice,
-							SliceCenter = Rect.new(52, 31, 261, 502)
-						}),
-						create('TextLabel', {
-							Size = UDim2.fromOffset(145, 14),
-							Position = UDim2.fromOffset(13, 12),
-							BackgroundTransparency = 1,
-							Text = bedwars.ItemMeta[block.Name].displayName or block.Name,
-							TextXAlignment = Enum.TextXAlignment.Left,
-							TextYAlignment = Enum.TextYAlignment.Top,
-							TextColor3 = Color3.new(),
-							TextScaled = true,
-							Font = Enum.Font.Arial
-						}),
-						create('TextLabel', {
-							Size = UDim2.fromOffset(145, 14),
-							Position = UDim2.fromOffset(12, 11),
-							BackgroundTransparency = 1,
-							Text = bedwars.ItemMeta[block.Name].displayName or block.Name,
-							TextXAlignment = Enum.TextXAlignment.Left,
-							TextYAlignment = Enum.TextYAlignment.Top,
-							TextColor3 = color.Dark(uipallet.Text, 0.16),
-							TextScaled = true,
-							Font = Enum.Font.Arial
-						}),
+						create('UICorner', {CornerRadius = UDim.new(1, 0)}),
 						create('Frame', {
-							Size = UDim2.fromOffset(138, 4),
-							Position = UDim2.fromOffset(12, 32),
-							BackgroundColor3 = uipallet.Main
-						}, {
-							create('UICorner', {CornerRadius = UDim.new(1, 0)}),
-							create('Frame', {
-								[bedwars.Roact.Ref] = self.healthbarProgressRef,
-								Size = UDim2.fromScale(percent, 1),
-								BackgroundColor3 = Color3.fromHSV(math.clamp(percent / 2.5, 0, 1), 0.89, 0.75)
-							}, {create('UICorner', {CornerRadius = UDim.new(1, 0)})})
-						})
+							[bedwars.Roact.Ref] = self.healthbarProgressRef,
+							Size = UDim2.fromScale(percent, 1),
+							BackgroundColor3 = Color3.fromHSV(math.clamp(percent / 2.5, 0, 1), 0.89, 0.75)
+						}, {create('UICorner', {CornerRadius = UDim.new(1, 0)})})
 					})
-				}), part)
-		
-				self.healthbarMaid:GiveTask(function()
-					cleanCheck = false
-					self.healthbarBlockRef = nil
-					bedwars.Roact.unmount(mounted)
-					if self.healthbarPart then
-						self.healthbarPart:Destroy()
-					end
-					self.healthbarPart = nil
-				end)
-		
-				bedwars.RuntimeLib.Promise.delay(5):andThen(function()
-					if cleanCheck then
-						self.healthbarMaid:DoCleaning()
-					end
-				end)
-			end
-		
-			local newpercent = math.clamp((health - changeHealth) / maxHealth, 0, 1)
-			tweenService:Create(self.healthbarProgressRef:getValue(), TweenInfo.new(0.3), {
-				Size = UDim2.fromScale(newpercent, 1), BackgroundColor3 = Color3.fromHSV(math.clamp(newpercent / 2.5, 0, 1), 0.89, 0.75)
-			}):Play()
-		end)
+				})
+			}), part)
+	
+			self.healthbarMaid:GiveTask(function()
+				cleanCheck = false
+				self.healthbarBlockRef = nil
+				bedwars.Roact.unmount(mounted)
+				if self.healthbarPart then
+					self.healthbarPart:Destroy()
+				end
+				self.healthbarPart = nil
+			end)
+	
+			bedwars.RuntimeLib.Promise.delay(5):andThen(function()
+				if cleanCheck then
+					self.healthbarMaid:DoCleaning()
+				end
+			end)
+		end
+	
+		local newpercent = math.clamp((health - changeHealth) / maxHealth, 0, 1)
+		tweenService:Create(self.healthbarProgressRef:getValue(), TweenInfo.new(0.3), {
+			Size = UDim2.fromScale(newpercent, 1), BackgroundColor3 = Color3.fromHSV(math.clamp(newpercent / 2.5, 0, 1), 0.89, 0.75)
+		}):Play()
 	end
 	
 	local hit = 0
-	local targetting = nil
 	
-	local function attemptBreak(tab, localPosition)
-		if not tab then return end
-		table.sort(tab, function(a, b)
-			return (a.Position - localPosition).Magnitude >= (b.Position - localPosition).Magnitude
-		end)
-		for _, v in tab do
-			if (v.Position - localPosition).Magnitude < Range.Value and bedwars.BlockController:isBlockBreakable({blockPosition = v.Position / 3}, lplr) then
-				if not SelfBreak.Enabled and v:GetAttribute('PlacedByUserId') == lplr.UserId then continue end
-				if (v:GetAttribute('BedShieldEndTime') or 0) > workspace:GetServerTimeNow() then continue end
-				if LimitItem.Enabled and not (store.hand.tool and bedwars.ItemMeta[store.hand.tool.Name].breakBlock) then continue end
-	
-				hit += 1
-				local target, path, endpos = bedwars.breakBlock(v, Effect.Enabled, Animation.Enabled, CustomHealth.Enabled and customHealthbar or nil, AutoTool.Enabled, WallCheck.Enabled, Cache.Enabled)
-				if path then
-					local currentnode = target
-					if currentnode then
-						targetting = currentnode
-					end
-					for _, part in parts do
-						part.Position = currentnode or Vector3.zero
-						if currentnode then
-							part.BoxHandleAdornment.Color3 = currentnode == endpos and Color3.new(1, 0.2, 0.2) or currentnode == target and Color3.new(0.2, 0.2, 1) or Color3.new(0.2, 1, 0.2)
-						end
-						currentnode = path[currentnode]
-					end
+	local function switchHotbarItem(block)
+		if block and not block:GetAttribute('NoBreak') and not block:GetAttribute('Team'..(lplr:GetAttribute('Team') or 0)..'NoBreak') then
+			local tool, slot = store.tools[bedwars.ItemMeta[block.Name].block.breakType], nil
+			if tool then
+				for i, v in store.inventory.hotbar do
+					if v.item and v.item.itemType == tool.itemType then slot = i - 1 break end
 				end
 	
-				task.wait(Delay.Value)
+				if hotbarSwitch(slot) then
+					if inputService:IsMouseButtonPressed(0) then 
+						event:Fire() 
+					end
+					return true
+				end
+			end
+		end
+	end
 
-				targetting = nil
-	
-				return true
+	local function canSee(part)
+		local char = lplr.Character or lplr.CharacterAdded:Wait()
+		local root = char:WaitForChild("HumanoidRootPart")
+
+		if not part or not part:IsA("BasePart") then
+			return false
+		end
+
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Blacklist
+		params.FilterDescendantsInstances = {char, part}
+		params.IgnoreWater = true
+
+		local origin = root.Position
+		local direction = (part.Position - origin)
+
+		local result = workspace:Raycast(origin, direction, params)
+
+		if not result then
+			return true
+		end
+
+		return false
+	end
+
+	local function attemptBreak(tab, localPosition)
+		if not tab then return end
+
+		for _, v in tab do
+			if (v.Position - localPosition).Magnitude < Range.Value and bedwars.BlockController:isBlockBreakable({blockPosition = v.Position / 3}, lplr) then
+				if WC.Enabled then
+					if canSee(v) then
+
+						
+						if not SelfBreak.Enabled and v:GetAttribute('PlacedByUserId') == lplr.UserId then continue end
+						if (v:GetAttribute('BedShieldEndTime') or 0) > workspace:GetServerTimeNow() then continue end
+						if LimitItem.Enabled and not (store.hand.tool and bedwars.ItemMeta[store.hand.tool.Name].breakBlock) then continue end
+			
+						hit += 1
+						local target, path, endpos = bedwars.breakBlock(v, Effect.Enabled, Animation.Enabled, CustomHealth.Enabled and customHealthbar or nil, InstantBreak.Enabled)
+						print(target,path,endpos)
+						if path then
+							local currentnode = target
+							for _, part in parts do
+								part.Position = currentnode or Vector3.zero
+								if currentnode then
+									part.BoxHandleAdornment.Color3 = currentnode == endpos and Color3.new(1, 0.2, 0.2) or currentnode == target and Color3.new(0.2, 0.2, 1) or Color3.new(0.2, 1, 0.2)
+								end
+								currentnode = path[currentnode]
+							end
+						end
+			
+						task.wait(InstantBreak.Enabled and (store.damageBlockFail > tick() and 4.5 or 0) or BreakSpeed.Value)
+			
+						return true
+					else
+						return false
+					end
+				else
+					if AT.Enabled then
+						event = Instance.new('BindableEvent')
+						Breaker:Clean(event)
+						Breaker:Clean(event.Event:Connect(function()
+							contextActionService:CallFunction('block-break', Enum.UserInputState.Begin, newproxy(true))
+						end))
+						old = bedwars.BlockBreaker.hitBlock
+						bedwars.BlockBreaker.hitBlock = function(self, maid, raycastparams, ...)
+							local block = v
+							if switchHotbarItem(block and block.target and block.target.blockInstance or nil) then return end
+							return old(self, maid, raycastparams, ...)
+						end
+					else 
+						bedwars.BlockBreaker.hitBlock = old
+						old = nil
+					end
+					if not SelfBreak.Enabled and v:GetAttribute('PlacedByUserId') == lplr.UserId then continue end
+					if (v:GetAttribute('BedShieldEndTime') or 0) > workspace:GetServerTimeNow() then continue end
+					if LimitItem.Enabled and not (store.hand.tool and bedwars.ItemMeta[store.hand.tool.Name].breakBlock) then continue end
+		
+					hit += 1
+					local target, path, endpos = bedwars.breakBlock(v, Effect.Enabled, Animation.Enabled, CustomHealth.Enabled and customHealthbar or nil, InstantBreak.Enabled)
+										print(target,path,endpos)
+
+					if path then
+						local currentnode = target
+						for _, part in parts do
+							part.Position = currentnode or Vector3.zero
+							if currentnode then
+								part.BoxHandleAdornment.Color3 = currentnode == endpos and Color3.new(1, 0.2, 0.2) or currentnode == target and Color3.new(0.2, 0.2, 1) or Color3.new(0.2, 1, 0.2)
+							end
+							currentnode = path[currentnode]
+						end
+					end
+		
+					task.wait(InstantBreak.Enabled and (store.damageBlockFail > tick() and 4.5 or 0) or BreakSpeed.Value)
+		
+					return true
+				end
+
 			end
 		end
 	
 		return false
 	end
+
 	
 	Breaker = vape.Categories.Minigames:CreateModule({
-		Name = 'Breaker',
+		Name = 'Nuker',
 		Function = function(callback)
 			if callback then
 				for _ = 1, 30 do
@@ -7057,19 +7142,12 @@ run(function()
 						table.insert(tab, obj)
 					end
 				end)
-	
-				Breaker:Clean(runService.PreSimulation:Connect(function(dt)
-					if AutoAim.Enabled and targetting then
-						gameCamera.CFrame = gameCamera.CFrame:Lerp(CFrame.lookAt(gameCamera.CFrame.p, targetting), AimSpeed.Value * dt)
-					end
-				end))
-
 				repeat
 					task.wait(1 / UpdateRate.Value)
 					if not Breaker.Enabled then break end
 					if entitylib.isAlive then
 						local localPosition = entitylib.character.RootPart.Position
-	
+						
 						if attemptBreak(Bed.Enabled and beds, localPosition) then continue end
 						if attemptBreak(customlist, localPosition) then continue end
 						if attemptBreak(LuckyBlock.Enabled and luckyblock, localPosition) then continue end
@@ -7099,29 +7177,36 @@ run(function()
 			return val == 1 and 'stud' or 'studs'
 		end
 	})
-	Delay = Breaker:CreateSlider({
-		Name = 'Break Delay',
+	BreakSpeed = Breaker:CreateSlider({
+		Name = 'Break speed',
 		Min = 0,
 		Max = 0.3,
 		Default = 0.25,
-		Decimal = 5,
-		Suffix = function(val)
-			return 's'
-		end
+		Decimal = 100,
+		Suffix = 'seconds'
 	})
-	AimSpeed = Breaker:CreateSlider({
-		Name = 'Aim Speed',
-		Min = 1,
-		Max = 20,
-		Default = 20
-	})
-	AimSpeed.Object.Visible = false
 	UpdateRate = Breaker:CreateSlider({
 		Name = 'Update rate',
 		Min = 1,
 		Max = 120,
-		Default = 60,
+		Default = 80,
 		Suffix = 'hz'
+	})
+	
+	AT = Breaker:CreateToggle({
+		Name = "AutoTool",
+		Default = false,
+		Tooltip = "equips the correct tool",
+	})
+	NB = Breaker:CreateToggle({
+		Name = "Nearest Block",
+		Darker = true,
+		Default = false,
+		Tooltip = "Mines the nearest block to you"
+	})
+	WC = Breaker:CreateToggle({
+		Name = 'Wall Check',
+		Default = false,
 	})
 	Custom = Breaker:CreateTextList({
 		Name = 'Custom',
@@ -7138,12 +7223,6 @@ run(function()
 	Bed = Breaker:CreateToggle({
 		Name = 'Break Bed',
 		Default = true
-	})
-	AutoAim = Breaker:CreateToggle({
-		Name = 'Auto Aim',
-		Function = function(call)
-			AimSpeed.Object.Visible = call
-		end
 	})
 	LuckyBlock = Breaker:CreateToggle({
 		Name = 'Break Lucky Block',
@@ -7169,9 +7248,7 @@ run(function()
 	})
 	Animation = Breaker:CreateToggle({Name = 'Animation'})
 	SelfBreak = Breaker:CreateToggle({Name = 'Self Break'})
-	WallCheck = Breaker:CreateToggle({Name = 'Wall Check'})
-	Cache = Breaker:CreateToggle({Name = 'Break through block'})
-	AutoTool = Breaker:CreateToggle({Name = 'Auto Tool'})
+	InstantBreak = Breaker:CreateToggle({Name = 'Instant Break'})
 	LimitItem = Breaker:CreateToggle({
 		Name = 'Limit to items',
 		Tooltip = 'Only breaks when tools are held'
@@ -9979,28 +10056,10 @@ run(function()
 								if actualRoot then
 									local dir = CFrame.lookAt(selfpos, actualRoot.Position).LookVector
 									local pos = selfpos + dir * math.max(delta.Magnitude - 14.399, 0)
-									if vape.role == "user" then
-										swingCooldown = SyncHit.Enabled and (tick() - 0.0465) or tick()
-										bedwars.SwordController.lastAttack = workspace:GetServerTimeNow()
-										store.attackReach = SyncHit.Enabled and ((delta.Magnitude * 100) // 1 / 100 - 0.0465) or (delta.Magnitude * 100) // 1 / 100
-										store.attackReachUpdate = SyncHit.Enabled and (tick() + 1 - 0.0065) or tick() + 1
-									elseif vape.role == "premium" then
-										swingCooldown = SyncHit.Enabled and (tick() - 0.055) or tick()
-										bedwars.SwordController.lastAttack = workspace:GetServerTimeNow()
-										store.attackReach = SyncHit.Enabled and ((delta.Magnitude * 100) // 1 / 100 - 0.055) or (delta.Magnitude * 100) // 1 / 100
-										store.attackReachUpdate = SyncHit.Enabled and (tick() + 1 - 0.0055) or tick() + 1
-									elseif vape.role == "friend" or vape.role == "owner" or vape.role == "coowner" or vape.role == 'admin' then
-										swingCooldown = SyncHit.Enabled and (tick() - 0.045) or tick()
-										bedwars.SwordController.lastAttack = workspace:GetServerTimeNow()
-										store.attackReach = SyncHit.Enabled and ((delta.Magnitude * 100) // 1 / 100 - 0.045) or (delta.Magnitude * 100) // 1 / 100
-										store.attackReachUpdate = SyncHit.Enabled and (tick() + 1 - 0.0045) or tick() + 1
-									else
-										swingCooldown =  tick()
-										bedwars.SwordController.lastAttack = workspace:GetServerTimeNow()
-										store.attackReach = (delta.Magnitude * 100) // 1 / 100
-										store.attackReachUpdate =  tick() + 1
-									end
-
+									swingCooldown = SyncHit.Enabled and (tick() - 0.045) or tick()
+									bedwars.SwordController.lastAttack = workspace:GetServerTimeNow()
+									store.attackReach = SyncHit.Enabled and ((delta.Magnitude * 100) // 1 / 100 - 0.045) or (delta.Magnitude * 100) // 1 / 100
+									store.attackReachUpdate = SyncHit.Enabled and (tick() + 1 - 0.0045) or tick() + 1
 
 									if delta.Magnitude < 14.4 and ChargeTime.Value > 0.11 then
 										AnimDelay = tick()
@@ -10354,6 +10413,336 @@ run(function()
 		Tooltip = 'Only attacks when the sword is held'
 	})
 
+end)
+
+
+run(function()
+
+	local function isFirstPerson()
+		if not (lplr.Character and lplr.Character:FindFirstChild("Head")) then return false end
+		return (lplr.Character.Head.Position - gameCamera.CFrame.Position).Magnitude < 2
+	end
+
+	local shooting, old = false
+	local AutoShootInterval
+	local AutoShootSwitchSpeed
+	local OtherProjectiles
+	local AutoShootRange
+	local AutoShootFOV
+	local AutoShootWaitDelay
+	local lastAutoShootTime = 0
+	local autoShootEnabled = false
+	local KillauraTargetCheck
+	local FirstPersonCheck
+	
+	_G.autoShootLock = _G.autoShootLock or false
+	
+	local VirtualInputManager = game:GetService("VirtualInputManager")
+	
+	local function leftClick()
+		pcall(function()
+			VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+			task.wait(0.05)
+			VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+		end)
+	end
+	
+	local function hasArrows()
+		local arrowItem = getItem('arrow')
+		return arrowItem and arrowItem.amount > 0
+	end
+	
+	local function getBows()
+		local bows = {}
+		for i, v in store.inventory.hotbar do
+			if v.item and v.item.itemType then
+				local itemMeta = bedwars.ItemMeta[v.item.itemType]
+				if itemMeta and itemMeta.projectileSource then
+					local projectileSource = itemMeta.projectileSource
+					if projectileSource.ammoItemTypes and table.find(projectileSource.ammoItemTypes, 'arrow') then
+						table.insert(bows, i - 1)
+					end
+				end
+			end
+		end
+		return bows
+	end
+	
+	local function getSwordSlot()
+		for i, v in store.inventory.hotbar do
+			if v.item and bedwars.ItemMeta[v.item.itemType] then
+				local meta = bedwars.ItemMeta[v.item.itemType]
+				if meta.sword then
+					return i - 1
+				end
+			end
+		end
+		return nil
+	end
+	
+	local function hasValidTarget()
+		if KillauraTargetCheck.Enabled then
+			return store.KillauraTarget ~= nil
+		else
+			if not entitylib.isAlive then return false end
+			
+			local myPos = entitylib.character.RootPart.Position
+			local myLook = entitylib.character.RootPart.CFrame.LookVector
+			
+			for _, entity in entitylib.List do
+				if entity.Player == lplr then continue end
+				if not entity.Character then continue end
+				if not entity.RootPart then continue end
+				
+				if entity.Player then
+					if lplr:GetAttribute('Team') == entity.Player:GetAttribute('Team') then
+						continue
+					end
+				else
+					if not entity.Targetable then
+						continue
+					end
+				end
+				
+				local distance = (entity.RootPart.Position - myPos).Magnitude
+				if distance > AutoShootRange.Value then continue end
+				
+				local toTarget = (entity.RootPart.Position - myPos).Unit
+				local dot = myLook:Dot(toTarget)
+				local angle = math.acos(dot)
+				local fovRad = math.rad(AutoShootFOV.Value)
+				
+				if angle <= fovRad then
+					return true
+				end
+			end
+			
+			return false
+		end
+	end
+	
+	local AutoShoot = vape.Categories.Exploits:CreateModule({
+		Name = 'AutoShoot',
+		Function = function(callback)
+			if role ~= "owner" and role ~= "coowner" and role ~= "admin" and role ~= "friend" and role ~= "premium" then
+				vape:CreateNotification("Onyx", "You do not have permission to use this", 10, "alert")
+				return
+			end  
+			if callback then
+				autoShootEnabled = true
+				old = bedwars.ProjectileController.createLocalProjectile
+				bedwars.ProjectileController.createLocalProjectile = function(...)
+					local source, data, proj = ...
+					if OtherProjectiles.Enabled then
+						if source and proj and (proj == bedwars.ProjectileMeta[proj] and bedwars.ProjectileMeta[proj].combat) and not _G.autoShootLock then
+							task.spawn(function()
+								if not hasArrows() then
+									return
+								end
+								
+								if FirstPersonCheck.Enabled and not isFirstPerson() then
+									return
+								end
+								
+								if KillauraTargetCheck.Enabled then
+									if not store.KillauraTarget then
+										return
+									end
+								else
+									if not hasValidTarget() then
+										return
+									end
+								end
+								
+								local bows = getBows()
+								if #bows > 0 then
+									_G.autoShootLock = true
+									task.wait(AutoShootWaitDelay.Value)
+									local selected = store.inventory.hotbarSlot
+									for _, v in bows do
+										if hotbarSwitch(v) then
+											task.wait(0.05)
+											mouse1click()
+											task.wait(0.05)
+										end
+									end
+									hotbarSwitch(selected)
+									_G.autoShootLock = false
+								end
+							end)
+						end
+					else
+						if source and proj and (proj == 'arrow') and not _G.autoShootLock then
+							task.spawn(function()
+								if not hasArrows() then
+									return
+								end
+								
+								if FirstPersonCheck.Enabled and not isFirstPerson() then
+									return
+								end
+								
+								if KillauraTargetCheck.Enabled then
+									if not store.KillauraTarget then
+										return
+									end
+								else
+									if not hasValidTarget() then
+										return
+									end
+								end
+								
+								local bows = getBows()
+								if #bows > 0 then
+									_G.autoShootLock = true
+									task.wait(AutoShootWaitDelay.Value)
+									local selected = store.inventory.hotbarSlot
+									for _, v in bows do
+										if hotbarSwitch(v) then
+											task.wait(0.05)
+											mouse1click()
+											task.wait(0.05)
+										end
+									end
+									hotbarSwitch(selected)
+									_G.autoShootLock = false
+								end
+							end)
+						end
+					end
+
+					return old(...)
+				end
+				
+				task.spawn(function()
+					repeat
+						task.wait(0.1)
+						if autoShootEnabled and not _G.autoShootLock then
+							if not hasArrows() then
+								continue
+							end
+							
+							if FirstPersonCheck.Enabled and not isFirstPerson() then
+								continue
+							end
+							
+							if KillauraTargetCheck.Enabled then
+								if not store.KillauraTarget then
+									continue
+								end
+							else
+								if not hasValidTarget() then
+									continue
+								end
+							end
+							
+							local currentTime = tick()
+							if (currentTime - lastAutoShootTime) >= AutoShootInterval.Value then
+								local bows = getBows()
+								local swordSlot = getSwordSlot()
+								
+								if #bows > 0 then
+									_G.autoShootLock = true
+									lastAutoShootTime = currentTime
+									local originalSlot = store.inventory.hotbarSlot
+									
+									for _, bowSlot in bows do
+										if hotbarSwitch(bowSlot) then
+											task.wait(AutoShootSwitchSpeed.Value)
+											mouse1click()
+											task.wait(0.05)
+										end
+									end
+									
+									if swordSlot then
+										hotbarSwitch(swordSlot)
+									else
+										hotbarSwitch(originalSlot)
+									end
+									
+									_G.autoShootLock = false
+								end
+							end
+						end
+					until not autoShootEnabled
+				end)
+			else
+				autoShootEnabled = false
+				if old then
+					bedwars.ProjectileController.createLocalProjectile = old
+				end
+				_G.autoShootLock = false
+			end
+		end,
+		Tooltip = 'Automatically switches to bows and shoots them'
+	})
+	
+	AutoShootInterval = AutoShoot:CreateSlider({
+		Name = 'Shoot Interval',
+		Min = 0.1,
+		Max = 3,
+		Default = 0.5,
+		Decimal = 10,
+		Suffix = function(val)
+			return val == 1 and 'second' or 'seconds'
+		end,
+		Tooltip = 'How often to auto-shoot bows'
+	})
+	
+	AutoShootSwitchSpeed = AutoShoot:CreateSlider({
+		Name = 'Switch Delay',
+		Min = 0,
+		Max = 0.2,
+		Default = 0.05,
+		Decimal = 100,
+		Suffix = 's',
+		Tooltip = 'Delay between switching and shooting (lower = faster)'
+	})
+	
+	AutoShootWaitDelay = AutoShoot:CreateSlider({
+		Name = 'Wait Delay',
+		Min = 0,
+		Max = 1,
+		Default = 0,
+		Decimal = 100,
+		Suffix = 's',
+		Tooltip = 'Delay before shooting (helps prevent ghosting)'
+	})
+	
+	AutoShootRange = AutoShoot:CreateSlider({
+		Name = 'Range',
+		Min = 1,
+		Max = 30,
+		Default = 20,
+		Suffix = function(val)
+			return val == 1 and 'stud' or 'studs'
+		end,
+		Tooltip = 'Maximum range to auto-shoot'
+	})
+	
+	AutoShootFOV = AutoShoot:CreateSlider({
+		Name = 'FOV',
+		Min = 1,
+		Max = 360,
+		Default = 90,
+		Tooltip = 'Field of view for target detection (1-180 degrees)'
+	})
+	OtherProjectiles = AutoShoot:CreateToggle({
+		Name = "Other Projectiles",
+		Default = true,
+		Darker = true,
+		Tooltip = "Allows you to have other projectiles shooting(eg; fireballs)"
+	})
+	KillauraTargetCheck = AutoShoot:CreateToggle({
+		Name = 'Require Killaura Target',
+		Default = false,
+		Tooltip = 'Only auto-shoot when Killaura has a target (overrides Range/FOV)'
+	})
+	FirstPersonCheck = AutoShoot:CreateToggle({
+		Name = 'First Person Only',
+		Default = false,
+		Tooltip = 'Only works in first person mode'
+	})
 end)
 
 
