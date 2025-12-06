@@ -4891,8 +4891,6 @@ run(function()
 	local Downwards
 	local Diagonal
 	local LimitItem
-	local WoolOnly
-	local AutoSwitch
 	local Mouse
 	local adjacent, lastpos, label = {}, Vector3.zero
 	
@@ -4939,21 +4937,15 @@ run(function()
 	
 	local function getScaffoldBlock()
 		if store.hand.toolType == 'block' then
-			local suc, isWool = pcall(function() return store.localHand.itemType:find('wool') end)
-			if not suc then isWool = false end
-			if not WoolOnly.Enabled or isWool then
-				return store.hand.itemType, store.hand.amount
-			end
-		elseif (not LimitItem.Enabled) or AutoSwitch.Enabled then
+			return store.hand.tool.Name, store.hand.amount
+		elseif (not LimitItem.Enabled) then
 			local wool, amount = getWool()
 			if wool then
 				return wool, amount
 			else
-				if not WoolOnly.Enabled then
-					for _, item in store.inventory.inventory.items do
-						if bedwars.ItemMeta[item.itemType].block then
-							return item.itemType, item.amount
-						end
+				for _, item in store.inventory.inventory.items do
+					if bedwars.ItemMeta[item.itemType].block then
+						return item.itemType, item.amount
 					end
 				end
 			end
@@ -4987,9 +4979,6 @@ run(function()
 						end
 	
 						if wool then
-							if AutoSwitch.Enabled then
-								pcall(function() switchItem(wool) end)
-							end
 							local root = entitylib.character.RootPart
 							if Tower.Enabled and inputService:IsKeyDown(Enum.KeyCode.Space) and (not inputService:GetFocusedTextBox()) then
 								root.Velocity = Vector3.new(root.Velocity.X, 38, root.Velocity.Z)
@@ -5043,10 +5032,8 @@ run(function()
 		Name = 'Diagonal',
 		Default = true
 	})
-	WoolOnly = Scaffold:CreateToggle({Name = "Wool Only"})
 	LimitItem = Scaffold:CreateToggle({Name = 'Limit to items'})
 	Mouse = Scaffold:CreateToggle({Name = 'Require mouse down'})
-	AutoSwitch = Scaffold:CreateToggle({Name = "Auto Switch"})
 	Count = Scaffold:CreateToggle({
 		Name = 'Block Count',
 		Function = function(callback)
@@ -5069,7 +5056,6 @@ run(function()
 			end
 		end
 	})
-end)
 	
 run(function()
 	local ShopTierBypass
