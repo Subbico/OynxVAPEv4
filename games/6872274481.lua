@@ -7177,7 +7177,7 @@ run(function()
 		Name = 'Limit to items',
 		Tooltip = 'Only breaks when tools are held'
 	})
-end)
+end).
 
 run(function()
 	local BedBreakEffect
@@ -10603,10 +10603,6 @@ run(function()
 		Name = 'Desync',
 		Function = function(callback)
 						if not enabled.Enabled then vape:CreateNotification('Onyx', "Ignored, You do not have the setting on to use this module",5,"warning") return end
-   			if role ~= "owner" and role ~= "coowner" and role ~= "admin" and role ~= "friend" and role ~= "premium"then
-																vape:CreateNotification("Onyx", "You do not have permission to use this", 10, "alert")
-				return
-			end       
 			if callback then
 				local teleported
 				Desync:Clean(lplr.OnTeleport:Connect(function()
