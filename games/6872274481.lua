@@ -7177,7 +7177,7 @@ run(function()
 		Name = 'Limit to items',
 		Tooltip = 'Only breaks when tools are held'
 	})
-end).
+end)
 
 run(function()
 	local BedBreakEffect
@@ -10591,6 +10591,7 @@ run(function()
 		Tooltip = "Makes u leave ur current party",
 	})
 end)
+
 
 run(function()
 	local Desync
