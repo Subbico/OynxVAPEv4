@@ -8216,10 +8216,6 @@ run(function()
 	Speed = vape.Categories.Blatant:CreateModule({
 		Name = 'Speed',
 		Function = function(callback)
-			if role ~= "owner" and role ~= "coowner" and role ~= "admin" and role ~= "friend" and role ~= "premium"and role ~= "user"then
-				vape:CreateNotification("Onyx", "You do not have permission to use this", 10, "alert")
-				return
-			end    																																																							
 			frictionTable.Speed = callback or nil
 			updateVelocity()
 
@@ -8297,10 +8293,6 @@ run(function()
 	Fly = vape.Categories.Blatant:CreateModule({
 		Name = 'Fly',
 		Function = function(callback)
-			if role ~= "owner" and role ~= "coowner" and role ~= "admin" and role ~= "friend" and role ~= "premium"and role ~= "user"then
-				vape:CreateNotification("Onyx", "You do not have permission to use this", 10, "alert")
-				return
-			end    																																																							
 			frictionTable.Fly = callback or nil
 			updateVelocity()
 			if callback then
@@ -8658,10 +8650,6 @@ run(function()
 		Name = "KitESP",
 		Tooltip = "Specfic kits work for this module",
 		Function = function(callback)
-			if role ~= "owner" and role ~= "coowner" and role ~= "admin" and role ~= "friend" and role ~= "premium"and role ~= "user"then
-				vape:CreateNotification("Onyx", "You do not have permission to use this", 10, "alert")
-				return
-			end    
 			if callback then
 				recreateESP()
 			else
@@ -9120,10 +9108,6 @@ end
     StaffDetector = vape.Categories.Utility:CreateModule({
         Name = 'StaffDetectorV2',
         Function = function(callback)
-   			if role ~= "owner" and role ~= "coowner" and role ~= "admin" and role ~= "friend" and role ~= "premium"and role ~= "user"then
-							vape:CreateNotification("Onyx", "You do not have permission to use this", 10, "alert")
-				return
-			end       
             if callback then
                 if playersService and playersService.PlayerAdded then
                     StaffDetector:Clean(playersService.PlayerAdded:Connect(playerAdded))
@@ -9400,10 +9384,6 @@ run(function()
         Name = "KitRender",
         Tooltip = "Allows you to see everyone's kit during kit phase (5v5, Ranked)",
         Function = function(callback)
-   			if role ~= "owner" and role ~= "coowner" and role ~= "admin" and role ~= "friend" then
-				vape:CreateNotification("Onyx", "You do not have permission to use this", 10, "alert")
-				return
-			end       
             if callback then
                 task.spawn(function()
                     local team2 = PlayerGui:WaitForChild("MatchDraftApp"):WaitForChild("DraftAppBackground"):WaitForChild("BodyContainer"):WaitForChild("Team2Column")
@@ -9458,10 +9438,6 @@ run(function()
         Name = "BetterDavey",
         Tooltip = "makes u look better with davey",
         Function = function(callback)
-   			if role ~= "owner" and role ~= "coowner" and role ~= "admin" and role ~= "friend" and role ~= "premium"and role ~= "user"then
-				vape:CreateNotification("Onyx", "You do not have permission to use this", 10, "alert")
-				return
-			end       
             local worldFolder = getWorldFolder()
             if not worldFolder then return end
             local blocks = worldFolder:WaitForChild("Blocks")
@@ -9518,12 +9494,7 @@ run(function()
 		Name = "MatchHistory",
 		Tooltip = 'Resets ur history',
 		Function = function(callback)
-			if role ~= "owner" and role ~= "coowner" and role ~= "admin" and role ~= "friend" then
-				vape:CreateNotification("Onyx", "You do not have permission to use this", 10, "alert")
-				return
-			end       
-
-			if callback then 
+			if callback then
 				MatchHistory:Toggle(false)
 				local TeleportService = game:GetService("TeleportService")
 				local data = TeleportService:GetLocalPlayerTeleportData()
@@ -9538,11 +9509,7 @@ run(function()
 		Name = "AutoBan",
 		Tooltip = 'Automatically bans a kit for you(5v5, ranked only)',
 		Function = function(callback)
-   			if role ~= "owner" and role ~= "coowner" and role ~= "admin" and role ~= "friend"then
-				vape:CreateNotification("Onyx", "You do not have permission to use this", 10, "alert")
-				return
-			end       
-			if callback then 
+			if callback then
 				AutoBan:Toggle(false)
 				  local kits = {"berserker", "hatter", "flower_bee", "glacial_skater",'void_dragon','card','cat'}
     for _, kit in ipairs(kits) do
@@ -9598,10 +9565,6 @@ run(function()
 	ItemlessLongjump = vape.Categories.Blatant:CreateModule({
 		Name = "ItemlessLongjump",
 		Function = function(call)
-			if role ~= "owner" and role ~= "coowner" and role ~= "admin" and role ~= "friend" and role ~= "premium" and role ~= "user"then
-				vape:CreateNotification("Onyx", "You do not have permission to use this", 10, "alert")
-				return
-			end  
 			ItemlessLongjump.Enabled = call
 			if call then
 				lplr.Character.HumanoidRootPart.Velocity = lplr.Character.HumanoidRootPart.Velocity + Vector3.new(0, 100, 0)
@@ -9633,10 +9596,6 @@ local Mode
 	 AutoReport = vape.Categories.Exploits:CreateModule({
 		Name = "AutoReport",
 		Function = function(callback)
-   			if role ~= "owner" and role ~= "coowner" and role ~= "admin" and role ~= "friend" and role ~= "premium"then
-				vape:CreateNotification("Onyx", "You do not have permission to use this", 10, "alert")
-				return
-			end       
 			if callback then
 
 				for _, v in ipairs(game:GetService("Players"):GetPlayers()) do
