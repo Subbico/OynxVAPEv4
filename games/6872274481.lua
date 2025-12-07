@@ -44,7 +44,7 @@ local whitelist = vape.Libraries.whitelist
 local prediction = vape.Libraries.prediction
 local getfontsize = vape.Libraries.getfontsize
 local getcustomasset = vape.Libraries.getcustomasset
-local role = vape.role or "guest"
+local role = vape.role or "premium"
 local user = vape.user or "GUEST"
 task.spawn(function()
 	while task.wait(0.01) do
