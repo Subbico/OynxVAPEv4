@@ -4453,7 +4453,7 @@ Scaffold = vape.Categories.Utility:CreateModule({
         if callback then
             local towerThread
             
-            -- Fast tower building with CPS and animation manipulation
+            -- Tower building with conditional logic
             local function startTowerBuild()
                 if towerThread then return end
                 towerThread = task.spawn(function()
@@ -4465,43 +4465,70 @@ Scaffold = vape.Categories.Utility:CreateModule({
                             if entitylib.isAlive then
                                 local root = entitylib.character.RootPart
                                 local humanoid = entitylib.character.Humanoid
+                                local moveDir = humanoid.MoveDirection
+                                local isMoving = moveDir.Magnitude > 0.1
                                 if root and humanoid then
                                     local wool = getScaffoldBlock()
-                                    -- Only apply velocity if we have blocks or LimitItem is off
-                                    if (wool or not LimitItem.Enabled) and not bedwars.AppController:isLayerOpen(bedwars.UILayers.MAIN) then
-                                        root.Velocity = Vector3.new(root.Velocity.X, 38, root.Velocity.Z)
-                                        
-                                        -- Play jump animation when going up
-                                        if not jumpTrack or not jumpTrack.IsPlaying then
-                                            jumpTrack = humanoid:LoadAnimation(jumpAnim)
-                                            jumpTrack.Priority = Enum.AnimationPriority.Action
-                                            jumpTrack:Play()
-                                            if fallTrack then fallTrack:Stop() end
-                                        end
-                                    else
-                                        -- Play fall animation when going down (not applying upward velocity)
-                                        if root.Velocity.Y < 0 and (not fallTrack or not fallTrack.IsPlaying) then
-                                            fallTrack = humanoid:LoadAnimation(fallAnim)
-                                            fallTrack.Priority = Enum.AnimationPriority.Action
-                                            fallTrack:Play()
-                                            if jumpTrack then jumpTrack:Stop() end
-                                        end
-                                    end
-                                    
-                                    -- Place blocks if we have them
                                     if wool and not bedwars.AppController:isLayerOpen(bedwars.UILayers.MAIN) then
-                                        local pos = root.Position - Vector3.new(0, entitylib.character.HipHeight + 1.5, 0)
-                                        local roundedPos = roundPos(pos)
-                                        
-                                        -- Only do proximity check if position changed
-                                        if lastBlockPos ~= roundedPos then
-                                            local block, blockpos = getPlacedBlock(roundedPos)
-                                            if not block then
-                                                blockpos = checkAdjacent(blockpos * 3) and blockpos * 3 or blockProximity(pos)
-                                                if blockpos then
-                                                    task.spawn(bedwars.placeBlock, blockpos, wool, false)
-                                                    lastPlace = currentTime
-                                                    lastBlockPos = roundedPos
+                                        if isMoving then
+                                            -- Build straight horizontal bridge when moving and going up
+                                            local hipHeight = entitylib.character.HipHeight
+                                            local downOffset = Downwards.Enabled and inputService:IsKeyDown(Enum.KeyCode.LeftShift) and 4.5 or 1.5
+                                            local basePos = root.Position - Vector3.new(0, hipHeight + downOffset, 0)
+                                            for i = 1, Expand.Value do
+                                                if tick() - lastPlacementTime < 0.02 then break end
+                                                local currentpos = roundPos(basePos + moveDir * i)
+                                                
+                                                if Diagonal.Enabled then
+                                                    local angle = math.abs(math.round(math.deg(math.atan2(-moveDir.X, -moveDir.Z)) / 45) * 45)
+                                                    if angle % 90 == 45 then
+                                                        local dt = (lastpos - currentpos)
+                                                        if ((dt.X == 0 and dt.Z ~= 0) or (dt.X ~= 0 and dt.Z == 0)) and 
+                                                           ((lastpos - root.Position) * Vector3.new(1, 0, 1)).Magnitude < 2.5 then
+                                                            currentpos = lastpos
+                                                        end
+                                                    end
+                                                end
+
+                                                local block, blockpos = getPlacedBlock(currentpos)
+                                                if not block then
+                                                    blockpos = checkAdjacent(blockpos * 3) and blockpos * 3 or blockProximity(currentpos)
+                                                    if blockpos then
+                                                        task.spawn(bedwars.placeBlock, blockpos, wool, false)
+                                                        lastPlacementTime = tick()
+                                                    end
+                                                end
+                                                lastpos = currentpos
+                                            end
+                                            -- Stop animations when building horizontally
+                                            if jumpTrack then jumpTrack:Stop() end
+                                            if fallTrack then fallTrack:Stop() end
+                                            jumpTrack = nil
+                                            fallTrack = nil
+                                        else
+                                            -- Build up tower when not moving and going up
+                                            root.Velocity = Vector3.new(root.Velocity.X, 38, root.Velocity.Z)
+                                            
+                                            -- Play jump animation
+                                            if not jumpTrack or not jumpTrack.IsPlaying then
+                                                jumpTrack = humanoid:LoadAnimation(jumpAnim)
+                                                jumpTrack.Priority = Enum.AnimationPriority.Action
+                                                jumpTrack:Play()
+                                                if fallTrack then fallTrack:Stop() end
+                                            end
+
+                                            local pos = root.Position - Vector3.new(0, entitylib.character.HipHeight + 1.5, 0)
+                                            local roundedPos = roundPos(pos)
+                                            
+                                            if lastBlockPos ~= roundedPos then
+                                                local block, blockpos = getPlacedBlock(roundedPos)
+                                                if not block then
+                                                    blockpos = checkAdjacent(blockpos * 3) and blockpos * 3 or blockProximity(pos)
+                                                    if blockpos then
+                                                        task.spawn(bedwars.placeBlock, blockpos, wool, false)
+                                                        lastPlace = currentTime
+                                                        lastBlockPos = roundedPos
+                                                    end
                                                 end
                                             end
                                         end
@@ -4556,7 +4583,7 @@ Scaffold = vape.Categories.Utility:CreateModule({
                 end)
             end
 
-            -- Main scaffold loop with conditional building
+            -- Main scaffold loop (only when tower not active)
             repeat
                 if entitylib.isAlive then
                     local wool, amount = getScaffoldBlock()
@@ -4571,7 +4598,11 @@ Scaffold = vape.Categories.Utility:CreateModule({
                         label.TextColor3 = Color3.fromHSV((amount / 128) / 2.8, 0.86, 1)
                     end
 
-                    if wool then
+                    -- Only build in main loop when tower is not active
+                    local towerActive = Tower.Enabled and (inputService:IsKeyDown(Enum.KeyCode.Space) or 
+                        (inputService.TouchEnabled and lplr.PlayerGui.TouchGui.TouchControlFrame.JumpButton.ImageTransparency < 1))
+                    
+                    if wool and not towerActive then
                         local root = entitylib.character.RootPart
                         local humanoid = entitylib.character.Humanoid
                         local moveDir = humanoid.MoveDirection
@@ -4582,9 +4613,9 @@ Scaffold = vape.Categories.Utility:CreateModule({
                         local basePos = root.Position - Vector3.new(0, hipHeight + downOffset, 0)
 
                         if isMoving then
-                            -- Build horizontal bridge when moving (prevents tele bridge)
+                            -- Build horizontal bridge when moving
                             for i = 1, Expand.Value do
-                                if tick() - lastPlacementTime < 0.02 then break end -- Rate limit
+                                if tick() - lastPlacementTime < 0.02 then break end
                                 local currentpos = roundPos(basePos + moveDir * i)
                                 
                                 if Diagonal.Enabled then
@@ -4608,11 +4639,6 @@ Scaffold = vape.Categories.Utility:CreateModule({
                                 end
                                 lastpos = currentpos
                             end
-                            -- Stop animations when building horizontally
-                            if jumpTrack then jumpTrack:Stop() end
-                            if fallTrack then fallTrack:Stop() end
-                            jumpTrack = nil
-                            fallTrack = nil
                         elseif not isJumping then
                             -- Build up tower when stationary and not jumping
                             root.Velocity = Vector3.new(root.Velocity.X, 38, root.Velocity.Z)
@@ -4625,7 +4651,6 @@ Scaffold = vape.Categories.Utility:CreateModule({
                                 if fallTrack then fallTrack:Stop() end
                             end
 
-                            -- Place below
                             local pos = root.Position - Vector3.new(0, hipHeight + 1.5, 0)
                             local roundedPos = roundPos(pos)
                             local block, blockpos = getPlacedBlock(roundedPos)
@@ -4636,12 +4661,6 @@ Scaffold = vape.Categories.Utility:CreateModule({
                                     lastPlacementTime = tick()
                                 end
                             end
-                        else
-                            -- Stop animations when not building
-                            if jumpTrack then jumpTrack:Stop() end
-                            if fallTrack then fallTrack:Stop() end
-                            jumpTrack = nil
-                            fallTrack = nil
                         end
                     end
                 end
@@ -4714,6 +4733,7 @@ TowerCPS = Scaffold:CreateTwoSlider({
     DefaultMax = 20,
     Darker = true
 })
+
 
 
 	
