@@ -4373,6 +4373,7 @@ end
 local lastpos = Vector3.zero
 local label
 local lastPlace = 0
+local lastPlacementTime = 0 -- For rate limiting
 
 -- Optimized corner check using cached unit vectors
 local function nearCorner(poscheck, pos)
@@ -4577,8 +4578,10 @@ Scaffold = vape.Categories.Utility:CreateModule({
                         local downOffset = Downwards.Enabled and inputService:IsKeyDown(Enum.KeyCode.LeftShift) and 4.5 or 1.5
                         local basePos = root.Position - Vector3.new(0, hipHeight + downOffset, 0)
 
-                        for i = Expand.Value, 1, -1 do
-                            local currentpos = roundPos(basePos + moveDir * (i * 3))
+                        -- Smoother placement: 1-stud intervals with rate limiting
+                        for i = 1, Expand.Value do
+                            if tick() - lastPlacementTime < 0.02 then break end -- Rate limit: max 50 placements/sec
+                            local currentpos = roundPos(basePos + moveDir * i)
                             
                             if Diagonal.Enabled then
                                 local angle = math.abs(math.round(math.deg(math.atan2(-moveDir.X, -moveDir.Z)) / 45) * 45)
@@ -4596,6 +4599,7 @@ Scaffold = vape.Categories.Utility:CreateModule({
                                 blockpos = checkAdjacent(blockpos * 3) and blockpos * 3 or blockProximity(currentpos)
                                 if blockpos then
                                     task.spawn(bedwars.placeBlock, blockpos, wool, false)
+                                    lastPlacementTime = tick()
                                 end
                             end
                             lastpos = currentpos
@@ -4671,6 +4675,7 @@ TowerCPS = Scaffold:CreateTwoSlider({
     DefaultMax = 20,
     Darker = true
 })
+
 
 	
 run(function()
