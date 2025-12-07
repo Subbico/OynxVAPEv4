@@ -4730,10 +4730,10 @@ TowerCPS = Scaffold:CreateTwoSlider({
 	DefaultMax = 20,
 	Darker = true
 })
+
+
+
 	
-
-
-
 run(function()
 	local ShopTierBypass
 	local tiered, nexttier = {}, {}
