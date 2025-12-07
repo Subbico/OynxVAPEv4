@@ -4583,7 +4583,7 @@ Scaffold = vape.Categories.Utility:CreateModule({
                 end)
             end
 
-            -- Main scaffold loop (only when tower not active)
+            -- Main scaffold loop
             repeat
                 if entitylib.isAlive then
                     local wool, amount = getScaffoldBlock()
@@ -4598,22 +4598,28 @@ Scaffold = vape.Categories.Utility:CreateModule({
                         label.TextColor3 = Color3.fromHSV((amount / 128) / 2.8, 0.86, 1)
                     end
 
-                    -- Only build in main loop when tower is not active
-                    local towerActive = Tower.Enabled and (inputService:IsKeyDown(Enum.KeyCode.Space) or 
-                        (inputService.TouchEnabled and lplr.PlayerGui.TouchGui.TouchControlFrame.JumpButton.ImageTransparency < 1))
+                    -- Auto-toggle tower based on movement
+                    local root = entitylib.character.RootPart
+                    local moveDir = entitylib.character.Humanoid.MoveDirection
+                    local isMovingHorizontal = moveDir.Magnitude > 0.1
+                    local isMovingVertical = root and math.abs(root.Velocity.Y) > 0.1 or false
                     
-                    if wool and not towerActive then
-                        local root = entitylib.character.RootPart
-                        local humanoid = entitylib.character.Humanoid
-                        local moveDir = humanoid.MoveDirection
-                        local isMoving = moveDir.Magnitude > 0.1
-                        local isJumping = humanoid.Jump or humanoid:GetState() == Enum.HumanoidStateType.Jumping
+                    if isMovingVertical then
+                        Tower.Enabled = true
+                    elseif isMovingHorizontal then
+                        Tower.Enabled = false
+                    else
+                        Tower.Enabled = true
+                    end
+
+                    if wool then
+                        local isJumping = entitylib.character.Humanoid.Jump or entitylib.character.Humanoid:GetState() == Enum.HumanoidStateType.Jumping
                         local hipHeight = entitylib.character.HipHeight
                         local downOffset = Downwards.Enabled and inputService:IsKeyDown(Enum.KeyCode.LeftShift) and 4.5 or 1.5
                         local basePos = root.Position - Vector3.new(0, hipHeight + downOffset, 0)
 
-                        if isMoving then
-                            -- Build horizontal bridge when moving
+                        if isMovingHorizontal then
+                            -- Build horizontal bridge when moving horizontally
                             for i = 1, Expand.Value do
                                 if tick() - lastPlacementTime < 0.02 then break end
                                 local currentpos = roundPos(basePos + moveDir * i)
@@ -4640,25 +4646,27 @@ Scaffold = vape.Categories.Utility:CreateModule({
                                 lastpos = currentpos
                             end
                         elseif not isJumping then
-                            -- Build up tower when stationary and not jumping
-                            root.Velocity = Vector3.new(root.Velocity.X, 38, root.Velocity.Z)
-                            
-                            -- Play jump animation
-                            if not jumpTrack or not jumpTrack.IsPlaying then
-                                jumpTrack = humanoid:LoadAnimation(jumpAnim)
-                                jumpTrack.Priority = Enum.AnimationPriority.Action
-                                jumpTrack:Play()
-                                if fallTrack then fallTrack:Stop() end
-                            end
+                            -- Build up tower when stationary and not jumping (only if tower not disabled)
+                            if Tower.Enabled then
+                                root.Velocity = Vector3.new(root.Velocity.X, 38, root.Velocity.Z)
+                                
+                                -- Play jump animation
+                                if not jumpTrack or not jumpTrack.IsPlaying then
+                                    jumpTrack = entitylib.character.Humanoid:LoadAnimation(jumpAnim)
+                                    jumpTrack.Priority = Enum.AnimationPriority.Action
+                                    jumpTrack:Play()
+                                    if fallTrack then fallTrack:Stop() end
+                                end
 
-                            local pos = root.Position - Vector3.new(0, hipHeight + 1.5, 0)
-                            local roundedPos = roundPos(pos)
-                            local block, blockpos = getPlacedBlock(roundedPos)
-                            if not block then
-                                blockpos = checkAdjacent(blockpos * 3) and blockpos * 3 or blockProximity(pos)
-                                if blockpos then
-                                    task.spawn(bedwars.placeBlock, blockpos, wool, false)
-                                    lastPlacementTime = tick()
+                                local pos = root.Position - Vector3.new(0, hipHeight + 1.5, 0)
+                                local roundedPos = roundPos(pos)
+                                local block, blockpos = getPlacedBlock(roundedPos)
+                                if not block then
+                                    blockpos = checkAdjacent(blockpos * 3) and blockpos * 3 or blockProximity(pos)
+                                    if blockpos then
+                                        task.spawn(bedwars.placeBlock, blockpos, wool, false)
+                                        lastPlacementTime = tick()
+                                    end
                                 end
                             end
                         end
