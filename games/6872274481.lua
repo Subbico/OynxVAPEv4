@@ -3213,6 +3213,21 @@ ProjectileAura = vape.Categories.Blatant:CreateModule({
                                             if shoot then
                                                 bedwars.SoundManager:playSound(shoot)
                                             end
+                                            -- Play the projectile animation
+                                            if itemMeta.launchAnimation then
+                                                local player = game.Players.LocalPlayer
+                                                local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
+                                                if humanoid then
+                                                    local anim = Instance.new("Animation")
+                                                    anim.AnimationId = itemMeta.launchAnimation
+                                                    local track = humanoid:LoadAnimation(anim)
+                                                    track:Play()
+                                                    task.delay(0.5, function()
+                                                        track:Stop()
+                                                        anim:Destroy()
+                                                    end)
+                                                end
+                                            end
                                         end
                                     end)
                                     
